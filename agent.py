@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 import sys
 import memory
 from collections import deque
+from state import State
 
 
 # Super class that all agent classes inharit functions form
@@ -19,9 +20,10 @@ agent_goal_task
 '''
 class search_agent(Agent):
 
-    def __init__(self, agent_id, agent_goal_task, heuristic, strategy):
+    def __init__(self, agent_id: int, agent_color: chr, agent_goal_task: str, heuristic, strategy):
         super().__init__()
         self.agent_id = agent_id
+        self.agent_color = agent_color
         self.agent_goal_task = agent_goal_task
 
         # Conflict only interacts with this one
@@ -33,14 +35,10 @@ class search_agent(Agent):
     def __repr__(self):
         return 'search agent'
 
-
-    def search(self, world_state):
+    def search(self, world_state: State):
         self.world_state = world_state
         print('Starting search with strategy {}.'.format(self.strategy), file=sys.stderr, flush=True)
         strategy = self.strategy
-
-
-
         strategy.add_to_frontier(self.initial_state)
 
         iterations = 0

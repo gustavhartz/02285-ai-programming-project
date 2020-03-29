@@ -5,8 +5,6 @@ from collections import defaultdict
 class State:
     _RNG = random.Random(1)
 
-    walls = defaultdict(bool)
-
     def __init__(self, copy: 'State' = None):
         '''
         If copy is None: Creates an empty State.
@@ -25,15 +23,24 @@ class State:
         Note: The state should be considered immutable after it has been hashed, e.g. added to a dictionary!
         '''
 
+        # This defaultdict takes as input a string of coordinates an returns true if this posistion is a wall
+        self.walls = defaultdict(bool)
+
+        # this defaultdict takes as input a string of coordinates and returns a list of size 2 with color,char of the agents
         self.agents = defaultdict(list)
 
-        self.agents_goal = defaultdict(tuple)
+        # this default_dict takes as input an agent char an returns a list of string of coordinates with len one
+        self.agents_goal = defaultdict(list)
 
+        # this default_dict takes as input the char of the box and returns a list of coordinates for that type of box
         self.boxes_goal = defaultdict(list)
 
+        # this defaultdict takes as input a string of coordinates and returns a list of size 2 with color,char of the box
         self.boxes = defaultdict(list)
 
-        self.goal_positions = defaultdict(list)
+        # this default_dict takes as input a string of coordinates and returns a char corresponding to what element is
+        # in that position
+        self.goal_positions = defaultdict(str)
 
 
     

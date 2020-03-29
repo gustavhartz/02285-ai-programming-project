@@ -77,7 +77,7 @@ class SearchClient:
                         self.initial_state.goal_positions[f'{row},{col}'] = char
                     elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                         self.initial_state.boxes_goal[char] = \
-                            self.initial_state.boxes_goal[char].append([f'{row},{col}'])
+                            self.initial_state.boxes_goal[char].append(f'{row},{col}')
                         self.initial_state.goal_positions[f'{row},{col}'] = char
                     elif char == ' ':
                         # Free cell.
