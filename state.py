@@ -157,7 +157,7 @@ class State:
     def reverse_agent_dict(self):
         temp = defaultdict(list)
         for key, value in self.agents.items():
-            temp[value[1]] = [value[0], key]
+            temp[value[1]] = [value[0], [int(key[0]),int(key[2])]]
         return temp
 
     def __hash__(self):
