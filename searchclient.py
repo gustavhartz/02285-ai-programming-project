@@ -61,7 +61,7 @@ class SearchClient:
                         # End of line
                         break
                     else:
-                        print(f'Error, read invalid level character: {char} at {row,col}', file=sys.stderr, flush=True)
+                        print(f'Error, read invalid level character: {char,line} at {row,col}', file=sys.stderr, flush=True)
                         sys.exit(1)
                 row += 1
                 line = server_messages.readline()
@@ -75,11 +75,12 @@ class SearchClient:
                         # nothing to do
                         pass
                     elif char in "0123456789":
-                        self.initial_state.agents_goal[char] = [f'{row},{col}']
+                        self.initial_state.agents_goal[int(char)] = [f'{row},{col}']
                         self.initial_state.goal_positions[f'{row},{col}'] = char
                     elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        self.initial_state.boxes_goal[char] = \
-                            self.initial_state.boxes_goal[char].append(f'{row},{col}')
+                        x = self.initial_state.boxes_goal[char]
+                        x.append(f'{row},{col}')
+                        self.initial_state.boxes_goal[char] = x
                         self.initial_state.goal_positions[f'{row},{col}'] = char
                     elif char == ' ':
                         # Free cell.
@@ -87,12 +88,14 @@ class SearchClient:
                     elif char == '\n':
                         # End of line
                         break
+                    elif line == "#end\n":
+                        break
+
                     else:
-                        print(f'Error, read invalid level character: {char} at {row, col}', file=sys.stderr,
+                        print(f'Error, read invalid level character: {char, line} at {row, col}', file=sys.stderr,
                               flush=True)
                         sys.exit(1)
                 row += 1
-                line = server_messages.readline()
             print(f'Done with loading data', file=sys.stderr, flush=True)
 
         except Exception as ex:

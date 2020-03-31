@@ -2,6 +2,9 @@ import random
 from collections import defaultdict
 from action import ALL_ACTIONS, ActionType
 import re
+import sys
+from copy import copy as cp
+
 
 
 class State:
@@ -25,6 +28,7 @@ class State:
         
         Note: The state should be considered immutable after it has been hashed, e.g. added to a dictionary!
         '''
+        self._hash = None
         if copy is None:
             # This defaultdict takes as input a string of coordinates an returns true if this posistion is a wall
             self.walls = defaultdict(bool)
@@ -38,7 +42,7 @@ class State:
             # this default_dict takes as input the char of the box and returns a list of coordinates for that type of box
             self.boxes_goal = defaultdict(list)
 
-            # this defaultdict takes as input a string of coordinates and returns a list of size 2 with color,char of the box
+            # this defaultdict takes as input a string of coordinates and returns a list of size 2 with color,char, id of the box
             self.boxes = defaultdict(list)
 
             # this default_dict takes as input a string of coordinates and returns a char corresponding to what element is
@@ -53,11 +57,15 @@ class State:
 
             self.search_init = True
         else:
+            self.walls = copy.walls
+            self.goal_positions = copy.goal_positions
             self.parent = copy.parent
             self.action = copy.action
-            self.agents = copy.agents
-            self.boxes = copy.boxes
+            self.agents = cp(copy.agents)
+            self.boxes = cp(copy.boxes)
             self.search_init = False
+            self.sub_goal_box = copy.sub_goal_box
+            self.g = copy.g
 
     def is_initial_state(self) -> 'bool':
         return self.parent is None
@@ -68,9 +76,17 @@ class State:
         else:
             return False
 
-    def is_sub_goal_state(self, box_to: str, box_id: int) -> 'bool':
+    def is_sub_goal_state_box(self, box_to: str, box_id: int) -> 'bool':
         if box_to in self.boxes and self.boxes[box_to][2] == box_id:
             return True
+        else:
+            return False
+
+    def is_sub_goal_state_agent(self, agent_to: str, agent_id: int) -> 'bool':
+        if agent_to in self.agents:
+            if self.agents[agent_to][1] == agent_id:
+                return True
+            return False
         else:
             return False
     
@@ -88,9 +104,9 @@ class State:
 
     def is_free(self, new_position: str) -> 'bool':
         if self.search_init:
-            return new_position not in self.agents & new_position not in self.boxes & new_position not in self.walls
+            return (new_position not in self.agents) & (new_position not in self.boxes & new_position not in self.walls)
         else:
-            return new_position not in self.walls
+            return (new_position not in self.walls) & (new_position not in self.boxes)
 
     def _update_agent_location(self,old_location: str, new_location: str):
         x = self.agents[old_location]
@@ -102,11 +118,15 @@ class State:
         self.boxes.pop(old_location)
         self.boxes[new_location] = x
 
-    def get_children(self, agent_location) -> '[State, ...]':
+    def get_children(self, agentId) -> '[State, ...]':
         '''
         Returns a list of child states attained from applying every applicable action in the current state.
         The order of the actions is random.
         '''
+        for key, value in self.agents.items():
+            if value[1] == agentId:
+                agent_location = key
+
 
         children = []
         old_agent_location = [int(x) for x in re.findall(r'\d+', agent_location)]
@@ -122,34 +142,37 @@ class State:
 
             if action.action_type is ActionType.Move:
                 if self.is_free(new_agent_location_string):
-                    child = State(self)
+                    child = State(copy=self)
+                    child._update_agent_location(old_agent_location_string, new_agent_location_string)
                     child.parent = self
                     child.action = action
                     child.g += 1
                     children.append(child)
             elif action.action_type is ActionType.Push:
-                if self.box_at(new_agent_location_string) & self.boxes[new_agent_location_string][2] == self.sub_goal_box:
-                    new_box_location = f'{new_agent_position[0]+action.box_dir.d_row},{new_agent_position[1] + action.box_dir.d_col}'
+                if self.box_at(new_agent_location_string):
+                    if self.boxes[new_agent_location_string][2] == self.sub_goal_box:
+                        new_box_location = f'{new_agent_position[0]+action.box_dir.d_row},{new_agent_position[1] + action.box_dir.d_col}'
 
-                    if self.is_free(new_box_location):
-                        child = State(self)
-                        child._update_agent_location(old_agent_location_string,new_agent_location_string)
-                        child._update_box_location(new_agent_location_string,new_box_location)
-                        child.parent = self
-                        child.action = action
-                        child.g += 1
-                        children.append(child)
+                        if self.is_free(new_box_location):
+                            child = State(copy=self)
+                            child._update_agent_location(old_agent_location_string,new_agent_location_string)
+                            child._update_box_location(new_agent_location_string,new_box_location)
+                            child.parent = self
+                            child.action = action
+                            child.g += 1
+                            children.append(child)
             elif action.action_type is ActionType.Pull:
                 if self.is_free(new_agent_location_string):
                     old_box_location_string = f'{old_agent_location[0] + action.box_dir.d_row},{old_agent_location[1] + action.box_dir.d_col}'
-                    if self.box_at(old_box_location_string) & self.boxes[old_box_location_string][2] == self.sub_goal_box:
-                        child = State(self)
-                        child._update_agent_location(old_agent_location_string, new_agent_location_string)
-                        child._update_box_location(old_box_location_string, old_agent_location_string)
-                        child.parent = self
-                        child.action = action
-                        child.g += 1
-                        children.append(child)
+                    if self.box_at(old_box_location_string):
+                        if self.boxes[old_box_location_string][2] == self.sub_goal_box:
+                            child = State(copy=self)
+                            child._update_agent_location(old_agent_location_string, new_agent_location_string)
+                            child._update_box_location(old_box_location_string, old_agent_location_string)
+                            child.parent = self
+                            child.action = action
+                            child.g += 1
+                            children.append(child)
 
         State._RNG.shuffle(children)
         return children
@@ -164,11 +187,18 @@ class State:
         if self._hash is None:
             prime = 31
             _hash = 1
-            _hash = _hash * prime + self.agent_row
-            _hash = _hash * prime + self.agent_col
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in self.boxes))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in self.goals))
-            _hash = _hash * prime + hash(tuple(tuple(row) for row in self.walls))
+            temp=""
+            for row, value in self.agents.items(): temp = temp + str(row) + value[0] + str(value[1])
+            _hash = _hash * prime + hash(temp)
+            temp = ""
+            for row, value in self.boxes.items(): temp = temp + str(row) + value[0] + str(value[1]) + str(value[2])
+            _hash = _hash * prime + hash(temp)
+            temp = ""
+            for row, value in self.goal_positions.items(): temp = temp + str(row) + str(value)
+            _hash = _hash * prime + hash(temp)
+            temp = ""
+            for row, value in self.goal_positions.items(): temp = temp + str(row)
+            _hash = _hash * prime + hash(temp)
             self._hash = _hash
         return self._hash
     
@@ -180,7 +210,8 @@ class State:
         if self.goal_positions != other.goal_positions: return False
         if self.walls != other.walls: return False
         return True
-    
+
+    # TO DO: Fix this to work on new repr
     def __repr__(self):
         lines = []
         for row in range(State.MAX_ROW):
