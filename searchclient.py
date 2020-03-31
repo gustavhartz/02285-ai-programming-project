@@ -50,9 +50,9 @@ class SearchClient:
                     if char == '+':
                         self.initial_state.walls[f'{row},{col}'] = True
                     elif char in "0123456789":
-                        self.initial_state.agents[f'{row},{col}'] = [self.initial_state.colors[char], char]
+                        self.initial_state.agents[f'{row},{col}'] = [[self.initial_state.colors[char], int(char)]]
                     elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        self.initial_state.boxes[f'{row},{col}'] = [self.initial_state.colors[char], char, box_id]
+                        self.initial_state.boxes[f'{row},{col}'] = [[self.initial_state.colors[char], char, box_id]]
                         box_id += 1
                     elif char == ' ':
                         # Free cell.

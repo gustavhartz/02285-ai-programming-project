@@ -35,6 +35,7 @@ class ActionType:
 ActionType.Move = ActionType('Move')
 ActionType.Push = ActionType('Push')
 ActionType.Pull = ActionType('Pull')
+ActionType.NoOp = ActionType('NoOp')
 
 
 class Action:
