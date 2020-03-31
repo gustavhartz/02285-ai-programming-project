@@ -3,6 +3,8 @@ from state import State
 from action import Action, ActionType, Dir
 from collections import deque
 
+#Squarebrackets på alle kald til dicts
+
 
 class ConflictManager:
 
@@ -36,36 +38,36 @@ class ConflictManager:
 
             if action.action_type is ActionType.Move:
                 #Move agent
-                temp_state.agents(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')\
-                    .append(temp_state.agents(f'{agent_row},{agent_col}'))
+                temp_state.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                    .append(temp_state.agents[f'{agent_row},{agent_col}'][0])
                 
                 #Remove agent from old location
-                temp_state.agents(f'{agent_row},{agent_col}').pop(0)
+                temp_state.agents[f'{agent_row},{agent_col}'].pop(0)
             
             elif action.action_type is ActionType.Pull:
-                agent_id = temp_state.agents(f'{agent_row},{agent_col}')[0][1]
-                box_id = temp_state.boxes(temp_state.boxes(f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'))[0][1]
+                agent_id = temp_state.agents[f'{agent_row},{agent_col}'][0][1]
+                box_id = temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0][2]
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
                 '''
                 box_agent_match[box_id] = agent_id
                 #Move agent
-                temp_state.agents(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')\
-                    .append(temp_state.agents(f'{agent_row},{agent_col}'))
+                temp_state.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                    .append(temp_state.agents[f'{agent_row},{agent_col}'][0])
 
                 #Remove agent from old location
-                temp_state.agents(f'{agent_row},{agent_col}').pop(0)
+                temp_state.agents[f'{agent_row},{agent_col}'].pop(0)
 
                 #Move Box
-                temp_state.boxes(f'{agent_row},{agent_col}')\
-                    .append(temp_state.boxes(f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'))
+                temp_state.boxes[f'{agent_row},{agent_col}']\
+                    .append(temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0])
 
                 #Remove box from old location
-                temp_state.boxes(f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}').pop(0)
+                temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'].pop(0)
         
             elif action.action_type is ActionType.Push:
-                agent_id = temp_state.agents(f'{agent_row},{agent_col}')[0][1]
-                box_id = temp_state.boxes(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')[0][1]
+                agent_id = temp_state.agents[f'{agent_row},{agent_col}'][0][1]
+                box_id = temp_state.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0][2]
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
                 '''
@@ -73,23 +75,21 @@ class ConflictManager:
 
 
                 #Move Box
-                temp_state.boxes(f'{agent_row+action.agent_dir.d_row+action.box_dir.d_row},{agent_col+action.agent_dir.d_col+action.box_dir.d_col}')\
-                    .append(temp_state.boxes(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'))
+                temp_state.boxes[f'{agent_row+action.agent_dir.d_row+action.box_dir.d_row},{agent_col+action.agent_dir.d_col+action.box_dir.d_col}']\
+                    .append(temp_state.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0])
                 
                 #Remove Box
-                temp_state.boxes(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}').pop(0)
+                temp_state.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'].pop(0)
 
                 #Move agent
-                temp_state.agents(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')\
-                    .append(temp_state.agents(f'{agent_row},{agent_col}'))
+                temp_state.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                    .append(temp_state.agents[f'{agent_row},{agent_col}'][0])
                 
                 #Remove agent from old location
-                temp_state.agents(f'{agent_row},{agent_col}').pop(0)
+                temp_state.agents[f'{agent_row},{agent_col}'].pop(0)
         return [temp_state,box_agent_match]
         
-        
-
-
+   
     def check_collisions(self, agents):
         [temp_state,box_agent_match]  = self.temp_state_create(agents)
 
