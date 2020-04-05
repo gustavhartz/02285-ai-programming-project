@@ -77,14 +77,14 @@ class State:
             return False
 
     def is_sub_goal_state_box(self, box_to: str, box_id: int) -> 'bool':
-        if box_to in self.boxes and self.boxes[box_to][2] == box_id:
+        if box_to in self.boxes and self.boxes[box_to][0][2] == box_id:
             return True
         else:
             return False
 
     def is_sub_goal_state_agent(self, agent_to: str, agent_id: int) -> 'bool':
         if agent_to in self.agents:
-            if self.agents[agent_to][1] == agent_id:
+            if self.agents[agent_to][0][1] == agent_id:
                 return True
             return False
         else:
@@ -124,7 +124,7 @@ class State:
         The order of the actions is random.
         '''
         for key, value in self.agents.items():
-            if value[1] == agentId:
+            if value[0][1] == agentId:
                 agent_location = key
 
 
@@ -150,7 +150,7 @@ class State:
                     children.append(child)
             elif action.action_type is ActionType.Push:
                 if self.box_at(new_agent_location_string):
-                    if self.boxes[new_agent_location_string][2] == self.sub_goal_box:
+                    if self.boxes[new_agent_location_string][0][2] == self.sub_goal_box:
                         new_box_location = f'{new_agent_position[0]+action.box_dir.d_row},{new_agent_position[1] + action.box_dir.d_col}'
 
                         if self.is_free(new_box_location):
@@ -165,7 +165,7 @@ class State:
                 if self.is_free(new_agent_location_string):
                     old_box_location_string = f'{old_agent_location[0] + action.box_dir.d_row},{old_agent_location[1] + action.box_dir.d_col}'
                     if self.box_at(old_box_location_string):
-                        if self.boxes[old_box_location_string][2] == self.sub_goal_box:
+                        if self.boxes[old_box_location_string][0][2] == self.sub_goal_box:
                             child = State(copy=self)
                             child._update_agent_location(old_agent_location_string, new_agent_location_string)
                             child._update_box_location(old_box_location_string, old_agent_location_string)
@@ -180,7 +180,7 @@ class State:
     def reverse_agent_dict(self):
         temp = defaultdict(list)
         for key, value in self.agents.items():
-            temp[value[1]] = [value[0], [int(key[0]),int(key[2])]]
+            temp[value[0][1]] = [value[0][0], [int(key[0]),int(key[2])]]
         return temp
 
     def __hash__(self):
@@ -188,10 +188,10 @@ class State:
             prime = 31
             _hash = 1
             temp=""
-            for row, value in self.agents.items(): temp = temp + str(row) + value[0] + str(value[1])
+            for row, value in self.agents.items(): temp = temp + str(row) + value[0][0] + str(value[0][1])
             _hash = _hash * prime + hash(temp)
             temp = ""
-            for row, value in self.boxes.items(): temp = temp + str(row) + value[0] + str(value[1]) + str(value[2])
+            for row, value in self.boxes.items(): temp = temp + str(row) + value[0][0] + str(value[0][1]) + str(value[0][2])
             _hash = _hash * prime + hash(temp)
             temp = ""
             for row, value in self.goal_positions.items(): temp = temp + str(row) + str(value)

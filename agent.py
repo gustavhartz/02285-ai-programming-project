@@ -39,7 +39,7 @@ class search_agent(Agent):
 
     def search_box(self, world_state: 'State', box_from, box_to):
 
-        if world_state.boxes[box_from][0] != self.agent_color:
+        if world_state.boxes[box_from][0][0] != self.agent_color:
             raise Exception("Agent cannot move this box")
 
         self.world_state = State(world_state)
@@ -48,15 +48,15 @@ class search_agent(Agent):
 
         # remove
         for key, value in self.world_state.agents.items():
-            if value[1] == self.agent_char:
+            if value[0][1] == self.agent_char:
                 location = key
 
-        removed_dict = {k: v for k, v in self.world_state.agents.items() if v[1] == self.agent_char}
+        removed_dict = {k: v for k, v in self.world_state.agents.items() if v[0][1] == self.agent_char}
         self.world_state.agents = defaultdict(list, removed_dict)
 
         for key, value in self.world_state.boxes.items():
             if key == box_from:
-                box_id = value[2]
+                box_id = value[0][2]
 
         removed_dict = {k: v for k, v in self.world_state.boxes.items() if k == box_from}
         self.world_state.boxes = defaultdict(list, removed_dict)
@@ -107,10 +107,10 @@ class search_agent(Agent):
 
         # finding our initial location and removing all other elements to increase speed and simplify world
         for key, value in self.world_state.agents.items():
-            if value[1] == self.agent_char:
+            if value[0][1] == self.agent_char:
                 location = key
 
-        removed_dict = {k: v for k, v in self.world_state.agents.items() if v[1] == self.agent_char}
+        removed_dict = {k: v for k, v in self.world_state.agents.items() if v[0][1] == self.agent_char}
         self.world_state.agents = defaultdict(list, removed_dict)
 
 
