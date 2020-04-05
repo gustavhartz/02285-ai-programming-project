@@ -2,6 +2,7 @@
 from state import State
 from action import Action, ActionType, Dir
 from collections import deque
+from pulp import *
 
 #Squarebrackets på alle kald til dicts
 
@@ -23,7 +24,7 @@ class ConflictManager:
 
     def temp_state_create(self, agents):
         #Kontrollere foreløbigt et enkelt state
-        #antage at world_state bliver opdateret i agent control loop, så vi hver gang i denne metode har det korrekte billede af miljøet. 
+        #antage at world_state bliver opdateret i agent control loop, så     vi hver gang i denne metode har det korrekte billede af miljøet. 
         
         temp_state = State(self.world_state)
 
@@ -140,9 +141,87 @@ class ConflictManager:
                     agent_collisions.append(temp)
         return [agent_collisions, agent_illegal_moves]
 
-    def fix_it(self,agents):
+    def fix_collisions(self,agents):
 
-        [agent_collisions, agent_illegal_moves] = check_collisions(agents)
+        [agent_collisions, agent_illegal_moves] = self.check_collisions(agents)
+
+        '''I første omgang regner vi med ingen illegale moves,så denne vektor pille vi ikke ved. Det bliver altså så et spørgsmål 
+        om at give NoOps tilfældigt til agenterne så deres collisions løses, og så returnere deres joint actions
+        
+        Løser NoOp assignment-problemet som et LP problem med pakken pulp'''
+
+        #Conflicts = [[1,2],[4,5],[2,3,4]]
+
+        
+        #agent_chars = ['a0','a1','a2','a3','a4','a5']
+        agent_chars = []
+        for agent in agents:
+            agent_chars.append('a'+str(agent.agent_char))
+        
+        flat = []
+        for elem in agent_collisions:
+            for ind in elem:
+                flat.append(ind)
+
+        flatto = set(flat)
+
+        conflict_agents = []
+
+        for agt in agents:
+            if agt.agent_char in flatto:
+                conflict_agents.append(agt.agent_char)
+
+
+        Lp_prob = LpProblem('Problem', LpMaximize)
+
+        #define variables 
+        for agt in conflict_agents:
+                agent_chars[agt] = LpVariable(agent_chars[agt], lowBound = 0,cat='Integer')
+
+        #cost function
+        Lp_prob += lpSum([1 * agent_chars[agt] for agt in conflict_agents])
+
+        #constraints
+        for elem in agent_collisions:
+            Lp_prob += lpSum([1*agent_chars[agt] for agt in elem]) <= 1
+
+        for agt in conflict_agents:
+            Lp_prob += agt >= 0
+        
+        Lp_prob.solve()
+
+        #save results to dictionary for quick indexing
+        results = {}
+        for v in Lp_prob.variables():
+            results[int(v.name[-1:])] = v.varValue
+
+
+        #Ready to push NoOps into plans for agents:
+        for agent in agents:
+            if agent.agent_char in results:
+                if results[agent.agent_char] == 0:
+                    agent.plan.appendleft(ActionType.NoOp)
+
+        return [agent.plan.popleft() for agent in agents]
+                    
+                    
+
+        
+
+
+
+
+
+
+
+
+
+
+        
+        
+
+
+
 
 
 
