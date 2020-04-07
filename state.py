@@ -42,12 +42,15 @@ class State:
             # this default_dict takes as input the char of the box and returns a list of coordinates for that type of box
             self.boxes_goal = defaultdict(list)
 
-            # this defaultdict takes as input a string of coordinates and returns a list of size 2 with color,char, id of the box
+            # this defaultdict takes as input a string of coordinates and returns a list of size 3 with color,char, id of the box
             self.boxes = defaultdict(list)
 
             # this default_dict takes as input a string of coordinates and returns a char corresponding to what element is
             # in that position
             self.goal_positions = defaultdict(str)
+
+            #
+            self.colors = {}
 
             self.parent = None
             self.action = None

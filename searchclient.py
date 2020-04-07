@@ -39,6 +39,7 @@ class SearchClient:
                     break
                 line = server_messages.readline()
 
+
             # Loading in the level
             if line != "#initial\n":
                 raise Exception("Problem in parsing")

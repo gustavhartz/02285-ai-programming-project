@@ -6,6 +6,7 @@ import config
 from searchclient import SearchClient
 from agent import search_agent
 from strategy import StrategyBFS, StrategyDFS
+from goalassignment import *
 
 from state import State
 
@@ -73,43 +74,51 @@ def main():
     Testing with two agents
     '''
 
-    client.initial_state
+    # client.initial_state
+    #
+    # agent1 = search_agent(1, 'blue', StrategyBFS)
+    #
+    # agent0 = search_agent(0, 'red', StrategyBFS)
+    #
+    # # Location return a list
+    # location = client.initial_state.agents_goal[0]
+    # # Find plan for solving task
+    # agent0.search_position(client.initial_state, location[0])
+    #
+    # for key, value in client.initial_state.boxes.items():
+    #     box_start = key
+    # for key, value in client.initial_state.boxes_goal.items():
+    #     box_end = value[0]
+    #
+    # agent1.search_box(client.initial_state, box_start, box_end)
+    #
+    # print(agent0.plan, file=sys.stderr, flush=True)
+    # print(agent1.plan, file=sys.stderr, flush=True)
+    #
+    #
+    # while len(agent1.plan)>0 or len(agent0.plan)>0:
+    #     string_action=""
+    #     if len(agent0.plan)>0:
+    #         test = agent0.plan.popleft()
+    #         string_action = string_action+str(test)[1:len(str(test))-1]+";"
+    #     else:
+    #         string_action = string_action + "NoOp"
+    #
+    #     if len(agent1.plan)>0:
+    #         test = agent1.plan.popleft()
+    #         string_action = string_action+str(test)[1:len(str(test))-1]
+    #     else:
+    #         string_action = string_action + "NoOp"
+    #
+    #     print(string_action, flush=True)
 
-    agent1 = search_agent(1, 'blue', StrategyBFS)
-
-    agent0 = search_agent(0, 'red', StrategyBFS)
-
-    # Location return a list
-    location = client.initial_state.agents_goal[0]
-    # Find plan for solving task
-    agent0.search_position(client.initial_state, location[0])
-
-    for key, value in client.initial_state.boxes.items():
-        box_start = key
-    for key, value in client.initial_state.boxes_goal.items():
-        box_end = value[0]
-
-    agent1.search_box(client.initial_state, box_start, box_end)
-
-    print(agent0.plan, file=sys.stderr, flush=True)
-    print(agent1.plan, file=sys.stderr, flush=True)
+    '''
+    Testing assigner 
+    '''
+    x=GoalAssigner(client.initial_state)
+    x.create_tasks()
 
 
-    while len(agent1.plan)>0 or len(agent0.plan)>0:
-        string_action=""
-        if len(agent0.plan)>0:
-            test = agent0.plan.popleft()
-            string_action = string_action+str(test)[1:len(str(test))-1]+";"
-        else:
-            string_action = string_action + "NoOp"
-
-        if len(agent1.plan)>0:
-            test = agent1.plan.popleft()
-            string_action = string_action+str(test)[1:len(str(test))-1]
-        else:
-            string_action = string_action + "NoOp"
-
-        print(string_action, flush=True)
 
 
 
