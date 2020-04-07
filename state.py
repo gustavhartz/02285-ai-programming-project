@@ -51,6 +51,7 @@ class State:
 
             #
             self.colors = {}
+            self.colors_reverse = defaultdict(list)
 
             self.parent = None
             self.action = None
@@ -69,6 +70,7 @@ class State:
             self.search_init = False
             self.sub_goal_box = copy.sub_goal_box
             self.g = copy.g
+            self.colors_reverse = copy.colors_reverse
 
     def is_initial_state(self) -> 'bool':
         return self.parent is None
@@ -183,7 +185,7 @@ class State:
     def reverse_agent_dict(self):
         temp = defaultdict(list)
         for key, value in self.agents.items():
-            temp[value[0][1]] = [value[0][0], [int(key[0]),int(key[2])]]
+            temp[value[0][1]] = [value[0][0], [int(key[0]), int(key[2])]]
         return temp
 
     def __hash__(self):
