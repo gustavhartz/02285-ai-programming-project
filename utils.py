@@ -11,3 +11,9 @@ def cityblock_distance(pos1, pos2):
     pos2 = tuple(int(x) for x in re.findall(r'\d+', pos2))
     return abs(pos2[0] - pos1[0])+abs(pos2[1] - pos1[1])
 
+# TO DO:
+def _remove_element(list_elements, position):
+    if len(list_elements[position]) > 1:
+        list_elements[position].pop(0)
+    else:
+        list_elements.pop(position)

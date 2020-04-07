@@ -3,8 +3,7 @@ hospital
 #levelname
 SAtest
 #colors
-red: 0, A
-blue: 1, B
+red: 0, 1, A
 #initial
 +++++++++++++++++++++++++++
 + 1      0A               +

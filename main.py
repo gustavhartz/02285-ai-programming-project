@@ -9,6 +9,7 @@ from strategy import StrategyBFS, StrategyDFS
 from goalassignment import *
 from conflictManager import ConflictManager
 from state import State
+from copy import deepcopy as cp
 
 
 def main():
@@ -130,62 +131,42 @@ def main():
 
 
     # Whileloop
+    counter=0
     while True:
+        print(f"WHILE ENTER {counter}\n", file=sys.stderr, flush=True)
+        print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
+        print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
+
+        for e in list_agents:
+            print(f'{e.plan[0]} {e.agent_char} before', file=sys.stderr, flush=True)
+
+
         list_of_actions = conflict_manager.fix_collisions(list_agents)
-        print("Done", file=sys.stderr, flush=True)
 
         # push to server -> list of actions
+        my_string = ';'.join(list(str(x) for x in list_of_actions))
 
         current_state.world_state_update(list_of_actions)
+
+        print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
+        print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
+
+
 
         if current_state.world_is_goal_state():
             print("Done", file=sys.stderr, flush=True)
             break
 
+
         # update of state in classes
-        conflict_manager.world_state = current_state
-        GoalAssigner.world_state = current_state
         x.assign_tasks()
 
+        conflict_manager.world_state = cp(current_state)
+        GoalAssigner.world_state = cp(current_state)
 
-
-
-
-
-
-
-
-    while len(agent1.plan) > 0 or len(agent0.plan)>0:
-        string_action = ""
-        if len(agent0.plan) > 0:
-            test = agent0.plan.popleft()
-            string_action = string_action+str(test)[1:len(str(test))-1]+";"
-        else:
-            string_action = string_action + "NoOp;"
-
-        if len(agent1.plan) > 0:
-            test = agent1.plan.popleft()
-            string_action = string_action+str(test)[1:len(str(test))-1]
-        else:
-            string_action = string_action + "NoOp"
-        # x.update_world
         x.assign_tasks()
-
-        print(string_action, file=sys.stderr, flush=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        print("\n", file=sys.stderr, flush=True)
+        counter+=1
 
 
 

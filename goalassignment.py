@@ -4,7 +4,7 @@ from agent import search_agent
 from collections import defaultdict
 from utils import cityblock_distance
 import sys
-from action import ActionType
+from action import ActionType, Action
 
 
 
@@ -86,17 +86,17 @@ class GoalAssigner(Assigner):
                 used_ids.add(agent_tasks[key][1])
 
         # print(box_tasks, file=sys.stderr, flush=True)
-        print(agent_tasks, file=sys.stderr, flush=True)
         return box_tasks, agent_tasks
 
     def assign_tasks(self):
-
         used_ids = set()
         assignments = dict()
+        # print(self.world_state.agents, file=sys.stderr, flush=True)
         for element in self.agents:
             if len(element.plan) == 0:
                 min_dist = 10**5
                 best_element = None
+
                 list_of_potential_elements = self.world_state.colors_reverse[element.agent_color]
                 list_of_potential_elements = [x for x in list_of_potential_elements if x != element.agent_char]
                 for k, v in self.box_tasks.items():
@@ -114,9 +114,9 @@ class GoalAssigner(Assigner):
         if len(assignments)>0:
             self._delegate_tasks_box(assignments)
 
-
         # The agents that dosen't have a task should move to a goal location
         potential = list(set(self.agents) - set(assignments.values()))
+
         # The agents that dosen't have a task should move to a goal location
         potential = list(set(potential) - set([x for x in self.agents if len(x.plan) > 0]))
         assignments_a = dict()
@@ -128,7 +128,8 @@ class GoalAssigner(Assigner):
                 self.agent_tasks.pop(agent.agent_char)
             else:
                 # No able usefull actions
-                agent.plan.append(ActionType.NoOp)
+                agent.plan.append(Action(ActionType.NoOp, None, None))
+
 
         self._delegate_tasks_agent(assignments_a)
 

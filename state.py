@@ -3,7 +3,8 @@ from collections import defaultdict
 from action import ALL_ACTIONS, ActionType
 import re
 import sys
-from copy import copy as cp
+from copy import deepcopy as cp
+from utils import _remove_element
 
 
 
@@ -194,8 +195,9 @@ class State:
         agentDict = self.reverse_agent_dict()
        
         for agentId, action in enumerate(actions):
-            agent_row = agentDict[agentId][1][0]
-            agent_col = agentDict[agentId][1][1]
+            location = [int(x) for x in agentDict[agentId][1].split(",")]
+            agent_row = location[0]
+            agent_col = location[1]
         
             if action.action_type is ActionType.Move:
                 #Move agent
@@ -203,7 +205,7 @@ class State:
                     .append(self.agents[f'{agent_row},{agent_col}'][0])
                 
                 #Remove agent from old location
-                self.agents[f'{agent_row},{agent_col}'].pop(0)
+                _remove_element(self.agents, f'{agent_row},{agent_col}')
             
             elif action.action_type is ActionType.Pull:
                 '''
@@ -215,15 +217,15 @@ class State:
                     .append(self.agents[f'{agent_row},{agent_col}'][0])
 
                 #Remove agent from old location
-                self.agents[f'{agent_row},{agent_col}'].pop(0)
+                _remove_element(self.agents, f'{agent_row},{agent_col}')
 
                 #Move Box
                 self.boxes[f'{agent_row},{agent_col}']\
                     .append(self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0])
 
                 #Remove box from old location
-                self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'].pop(0)
-        
+                _remove_element(self.boxes, f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}')
+
             elif action.action_type is ActionType.Push:
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
@@ -234,26 +236,26 @@ class State:
                     .append(self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0])
                 
                 #Remove Box
-                self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'].pop(0)
+                _remove_element(self.boxes, f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')
 
                 #Move agent
                 self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
                     .append(self.agents[f'{agent_row},{agent_col}'][0])
                 
                 #Remove agent from old location
-                self.agents[f'{agent_row},{agent_col}'].pop(0)
-           
+                _remove_element(self.agents, f'{agent_row},{agent_col}')
 
+    # SØG PÅ DENNE MÅDE if key in dict
     def world_is_goal_state(self):
         for loc, char in self.goal_positions.items():
             if char in "0123456789":
-                if len(self.agents[loc]) == 0:
+                if loc not in self.agents:
                     return False
                 else: 
                     if self.agents[loc][0][1] != int(char):
                         return False
             else:
-                if len(self.boxes[loc]) == 0:
+                if loc not in self.boxes:
                     return False
                 else:
                     if self.boxes[loc][0][1] != char:

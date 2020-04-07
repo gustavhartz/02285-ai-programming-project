@@ -27,7 +27,7 @@ class ConflictManager:
         #Kontrollere foreløbigt et enkelt state
         #antage at world_state bliver opdateret i agent control loop, så     vi hver gang i denne metode har det korrekte billede af miljøet. 
         
-        temp_state = State(self.world_state)
+        temp_state = State(copy=self.world_state)
 
         agentDict = temp_state.reverse_agent_dict()
 
@@ -35,37 +35,42 @@ class ConflictManager:
 
         for agent in agents:
             action = agent.plan[0] # Et enkelt state
-            loccation = [int(x) for x in agentDict[agent.agent_char][1].split(",")]
-            agent_row = loccation[0]
-            agent_col = loccation[1]
-
+            location = [int(x) for x in agentDict[agent.agent_char][1].split(",")]
+            agent_row = location[0]
+            agent_col = location[1]
             if action.action_type is ActionType.Move:
+                # print(temp_state.agents, file=sys.stderr, flush=True)
                 #Move agent
                 temp_state.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
                     .append(temp_state.agents[f'{agent_row},{agent_col}'][0])
+                # print(temp_state.agents, file=sys.stderr, flush=True)
                 
                 #Remove agent from old location
-                temp_state.agents[f'{agent_row},{agent_col}'].pop(0)
+                self._remove_element(temp_state.agents, f'{agent_row},{agent_col}')
+                # print(temp_state.agents, file=sys.stderr, flush=True)
             
             elif action.action_type is ActionType.Pull:
                 box_id = temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0][2]
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
                 '''
+
                 box_agent_match[box_id] = agent.agent_char
                 #Move agent
+                # print(temp_state.agents, file=sys.stderr, flush=True)
                 temp_state.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
                     .append(temp_state.agents[f'{agent_row},{agent_col}'][0])
-
+                # print(temp_state.agents, file=sys.stderr, flush=True)
                 #Remove agent from old location
-                temp_state.agents[f'{agent_row},{agent_col}'].pop(0)
+                self._remove_element(temp_state.agents, f'{agent_row},{agent_col}')
 
                 #Move Box
                 temp_state.boxes[f'{agent_row},{agent_col}']\
                     .append(temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0])
 
                 #Remove box from old location
-                temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'].pop(0)
+                self._remove_element(temp_state.boxes,
+                                     f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}')
         
             elif action.action_type is ActionType.Push:
                 box_id = temp_state.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0][2]
@@ -80,15 +85,22 @@ class ConflictManager:
                     .append(temp_state.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0])
                 
                 #Remove Box
-                temp_state.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'].pop(0)
-
+                self._remove_element(temp_state.boxes,
+                                     f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')
                 #Move agent
                 temp_state.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
                     .append(temp_state.agents[f'{agent_row},{agent_col}'][0])
-                
                 #Remove agent from old location
-                temp_state.agents[f'{agent_row},{agent_col}'].pop(0)
+                self._remove_element(temp_state.agents, f'{agent_row},{agent_col}')
+
         return [temp_state,box_agent_match]
+
+    def _remove_element(self, list_elements, position):
+        if len(list_elements[position]) > 1:
+            list_elements[position].pop(0)
+        else:
+            list_elements.pop(position)
+
         
    
     def check_collisions(self, agents):
@@ -144,6 +156,8 @@ class ConflictManager:
     def fix_collisions(self,agents):
 
         [agent_collisions, agent_illegal_moves] = self.check_collisions(agents)
+        if len(agent_collisions) == 0:
+            return [agent.plan.popleft() for agent in agents]
 
         '''I første omgang regner vi med ingen illegale moves,så denne vektor pille vi ikke ved. Det bliver altså så et spørgsmål 
         om at give NoOps tilfældigt til agenterne så deres collisions løses, og så returnere deres joint actions
@@ -174,9 +188,9 @@ class ConflictManager:
 
         Lp_prob = LpProblem('Problem', LpMaximize)
 
-        #define variables 
+        #define variables
         for agt in conflict_agents:
-                agent_chars[agt] = LpVariable(agent_chars[agt], lowBound = 0,cat='Integer')
+            agent_chars[agt] = LpVariable(agent_chars[agt], lowBound = 0,cat='Integer')
 
         #cost function
         Lp_prob += lpSum([1 * agent_chars[agt] for agt in conflict_agents])
@@ -187,7 +201,6 @@ class ConflictManager:
 
         for agt in conflict_agents:
             Lp_prob += agt >= 0
-        print(Lp_prob, file=sys.stderr, flush=True)
         Lp_prob.solve()
 
         #save results to dictionary for quick indexing
@@ -200,7 +213,7 @@ class ConflictManager:
         for agent in agents:
             if agent.agent_char in results:
                 if results[agent.agent_char] == 0:
-                    agent.plan.appendleft(ActionType.NoOp)
+                    agent.plan.appendleft(Action(ActionType.NoOp, None, None))
 
         return [agent.plan.popleft() for agent in agents]
                     
