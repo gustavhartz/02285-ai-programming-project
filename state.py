@@ -202,7 +202,6 @@ class State:
                 self.agents[f'{agent_row},{agent_col}'].pop(0)
             
             elif action.action_type is ActionType.Pull:
-                box_id = self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0][2]
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
                 '''
@@ -222,7 +221,6 @@ class State:
                 self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'].pop(0)
         
             elif action.action_type is ActionType.Push:
-                box_id = self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0][2]
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
                 '''
