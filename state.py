@@ -186,6 +186,79 @@ class State:
             temp[value[0][1]] = [value[0][0], [int(key[0]),int(key[2])]]
         return temp
 
+    def world_state_update(self, actions: list):
+        agentDict = self.reverse_agent_dict()
+       
+        for agentId, action in enumerate(actions):
+            agent_row = agentDict[agentId][1][0]
+            agent_col = agentDict[agentId][1][1]
+        
+            if action.action_type is ActionType.Move:
+                #Move agent
+                self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                    .append(self.agents[f'{agent_row},{agent_col}'][0])
+                
+                #Remove agent from old location
+                self.agents[f'{agent_row},{agent_col}'].pop(0)
+            
+            elif action.action_type is ActionType.Pull:
+                box_id = self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0][2]
+                '''
+                Antager her at en box ikke kan flyttes af flere agenter på samme tid
+                '''
+               
+                #Move agent
+                self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                    .append(self.agents[f'{agent_row},{agent_col}'][0])
+
+                #Remove agent from old location
+                self.agents[f'{agent_row},{agent_col}'].pop(0)
+
+                #Move Box
+                self.boxes[f'{agent_row},{agent_col}']\
+                    .append(self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0])
+
+                #Remove box from old location
+                self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'].pop(0)
+        
+            elif action.action_type is ActionType.Push:
+                box_id = self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0][2]
+                '''
+                Antager her at en box ikke kan flyttes af flere agenter på samme tid
+                '''
+                
+                #Move Box
+                self.boxes[f'{agent_row+action.agent_dir.d_row+action.box_dir.d_row},{agent_col+action.agent_dir.d_col+action.box_dir.d_col}']\
+                    .append(self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0])
+                
+                #Remove Box
+                self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'].pop(0)
+
+                #Move agent
+                self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                    .append(self.agents[f'{agent_row},{agent_col}'][0])
+                
+                #Remove agent from old location
+                self.agents[f'{agent_row},{agent_col}'].pop(0)
+           
+
+    def world_is_goal_state(self):
+        for loc, char in self.goal_positions.items():
+            if char in "0123456789":
+                if len(self.agents[loc]) == 0:
+                    return False
+                else: 
+                    if self.agents[loc][0][1] != int(char):
+                        return False
+            else:
+                if len(self.boxes[loc]) == 0:
+                    return False
+                else:
+                    if self.boxes[loc][0][1] != char:
+                        return False
+        return True
+
+
     def __hash__(self):
         if self._hash is None:
             prime = 31

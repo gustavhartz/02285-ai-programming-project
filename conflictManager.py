@@ -22,7 +22,7 @@ class ConflictManager:
     # Når konflikterne er fundet skal vi finde en måde at spore hvile agenter der konflikter 
     # Til sidst finde en måde at løse det på.
 
-    def temp_state_create(self, agents):
+    def temp_state_create(self, agents: list):
         #Kontrollere foreløbigt et enkelt state
         #antage at world_state bliver opdateret i agent control loop, så     vi hver gang i denne metode har det korrekte billede af miljøet. 
         
@@ -46,12 +46,11 @@ class ConflictManager:
                 temp_state.agents[f'{agent_row},{agent_col}'].pop(0)
             
             elif action.action_type is ActionType.Pull:
-                agent_id = temp_state.agents[f'{agent_row},{agent_col}'][0][1]
                 box_id = temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0][2]
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
                 '''
-                box_agent_match[box_id] = agent_id
+                box_agent_match[box_id] = agent.char
                 #Move agent
                 temp_state.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
                     .append(temp_state.agents[f'{agent_row},{agent_col}'][0])
@@ -67,12 +66,11 @@ class ConflictManager:
                 temp_state.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'].pop(0)
         
             elif action.action_type is ActionType.Push:
-                agent_id = temp_state.agents[f'{agent_row},{agent_col}'][0][1]
                 box_id = temp_state.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0][2]
                 '''
                 Antager her at en box ikke kan flyttes af flere agenter på samme tid
                 '''
-                box_agent_match[box_id] = agent_id
+                box_agent_match[box_id] = agent.char
 
 
                 #Move Box
