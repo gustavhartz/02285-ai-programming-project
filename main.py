@@ -13,6 +13,8 @@ from copy import deepcopy as cp
 
 
 def main():
+
+
     # Read server messages from stdin.
     server_messages = sys.stdin
 
@@ -34,86 +36,6 @@ def main():
     client = SearchClient(server_messages)
 
     '''
-    Testing the agent class moving box
-    '''
-
-    # client.initial_state
-    #
-    # agent = search_agent(0, 'red', StrategyBFS)
-    # #
-    # for key, value in client.initial_state.boxes.items():
-    #     box_start = key
-    # for key, value in client.initial_state.boxes_goal.items():
-    #     box_end = value[0]
-    #
-    # agent.search_box(client.initial_state, box_start, box_end)
-    #
-    # print(agent.plan, file=sys.stderr, flush=True)
-    # for action in agent.plan:
-    #     print(str(action)[1:len(str(action))-1], flush=True)
-
-    '''
-    Testing agent class placement
-    '''
-
-    # client.initial_state
-    #
-    # agent = search_agent(0, 'red', StrategyBFS)
-    #
-    # location = client.initial_state.agents_goal[0]
-    #
-    # # Location return a list
-    # agent.search_position(client.initial_state, location[0])
-    #
-    # print(agent.plan, file=sys.stderr, flush=True)
-    #
-    # print(agent.plan, file=sys.stderr, flush=True)
-    # for action in agent.plan:
-    #     print(str(action)[1:len(str(action))-1], flush=True)
-
-    '''
-    Testing with two agents
-    '''
-
-    #
-    # agent1 = search_agent(1, 'blue', StrategyBFS)
-    #
-    # agent0 = search_agent(0, 'red', StrategyBFS)
-    #
-    #
-    # # Location return a list
-    # location = client.initial_state.agents_goal[0]
-    # # Find plan for solving task
-    # agent0.search_position(client.initial_state, location[0])
-    #
-    # for key, value in client.initial_state.boxes.items():
-    #     box_start = key
-    # for key, value in client.initial_state.boxes_goal.items():
-    #     box_end = value[0]
-    #
-    # agent1.search_box(client.initial_state, box_start, box_end)
-    #
-    # print(agent0.plan, file=sys.stderr, flush=True)
-    # print(agent1.plan, file=sys.stderr, flush=True)
-    #
-    #
-    # while len(agent1.plan)>0 or len(agent0.plan)>0:
-    #     string_action=""
-    #     if len(agent0.plan)>0:
-    #         test = agent0.plan.popleft()
-    #         string_action = string_action+str(test)[1:len(str(test))-1]+";"
-    #     else:
-    #         string_action = string_action + "NoOp"
-    #
-    #     if len(agent1.plan)>0:
-    #         test = agent1.plan.popleft()
-    #         string_action = string_action+str(test)[1:len(str(test))-1]
-    #     else:
-    #         string_action = string_action + "NoOp"
-    #
-    #     print(string_action, flush=True)
-
-    '''
     Testing assigner 
     '''
     current_state = State(client.initial_state)
@@ -131,11 +53,11 @@ def main():
 
 
     # Whileloop
-    counter=0
+    counter = 0
     while True:
         print(f"WHILE ENTER {counter}\n", file=sys.stderr, flush=True)
-        print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
-        print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
+        # print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
+        # print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
 
         for e in list_agents:
             print(f'{e.plan[0]} {e.agent_char} before', file=sys.stderr, flush=True)
@@ -145,28 +67,25 @@ def main():
 
         # push to server -> list of actions
         my_string = ';'.join(list(str(x) for x in list_of_actions))
+        print(my_string, flush=True)
+
+        # getting the data from the client to asses validity of actions
+        response = server_messages.readline().rstrip()
+        print(response, file=sys.stderr, flush=True)
 
         current_state.world_state_update(list_of_actions)
-
-        print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
-        print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
-
-
 
         if current_state.world_is_goal_state():
             print("Done", file=sys.stderr, flush=True)
             break
 
-
-        # update of state in classes
-        x.assign_tasks()
-
         conflict_manager.world_state = cp(current_state)
         GoalAssigner.world_state = cp(current_state)
 
         x.assign_tasks()
+
         print("\n", file=sys.stderr, flush=True)
-        counter+=1
+        counter += 1
 
 
 

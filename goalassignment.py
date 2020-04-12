@@ -91,7 +91,6 @@ class GoalAssigner(Assigner):
     def assign_tasks(self):
         used_ids = set()
         assignments = dict()
-        # print(self.world_state.agents, file=sys.stderr, flush=True)
         for element in self.agents:
             if len(element.plan) == 0:
                 min_dist = 10**5
@@ -111,7 +110,7 @@ class GoalAssigner(Assigner):
                 if best_element is None:
                     continue
                 assignments[best_element] = element
-        if len(assignments)>0:
+        if len(assignments) > 0:
             self._delegate_tasks_box(assignments)
 
         # The agents that dosen't have a task should move to a goal location
@@ -129,7 +128,6 @@ class GoalAssigner(Assigner):
             else:
                 # No able usefull actions
                 agent.plan.append(Action(ActionType.NoOp, None, None))
-
 
         self._delegate_tasks_agent(assignments_a)
 

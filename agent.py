@@ -45,6 +45,8 @@ class search_agent(Agent):
         self.world_state = State(world_state)
         print('Starting search with strategy {}.'.format(self.strategy), file=sys.stderr, flush=True)
         strategy = self.strategy
+        # In case there has been a previous search we need to clear the elements in the strategy object
+        strategy.reset_strategy()
 
         # remove
         for key, value in self.world_state.agents.items():
@@ -86,8 +88,7 @@ class search_agent(Agent):
             strategy.add_to_explored(leaf)
             x=strategy.explored.pop()
             strategy.explored.add(x)
-            # print("set value{}".format(x.agents), file=sys.stderr, flush=True)
-            # print(len(leaf.get_children(self.agent_char)), file=sys.stderr, flush=True)
+
             for child_state in leaf.get_children(self.agent_char):  # The list of expanded states is shuffled randomly; see state.py.
                 # print("child box location value{}".format(child_state.boxes), file=sys.stderr, flush=True)
                 # print("set value{}".format(x.__hash__()), file=sys.stderr, flush=True)
@@ -104,6 +105,8 @@ class search_agent(Agent):
         self.world_state = State(world_state)
         print('Starting search with strategy {}.'.format(self.strategy), file=sys.stderr, flush=True)
         strategy = self.strategy
+        # In case there has been a previous search we need to clear the elements in the strategy object
+        strategy.reset_strategy()
 
         # finding our initial location and removing all other elements to increase speed and simplify world
         for key, value in self.world_state.agents.items():
@@ -111,13 +114,13 @@ class search_agent(Agent):
                 location = key
 
         removed_dict = {k: v for k, v in self.world_state.agents.items() if v[0][1] == self.agent_char}
+
         self.world_state.agents = defaultdict(list, removed_dict)
 
 
         # Removing all e
         while len(self.world_state.boxes) > 0:
             self.world_state.boxes.popitem()
-
         strategy.add_to_frontier(state=self.world_state)
 
         iterations = 0
@@ -142,7 +145,7 @@ class search_agent(Agent):
             strategy.add_to_explored(leaf)
             x = strategy.explored.pop()
             strategy.explored.add(x)
-            for child_state in leaf.get_children(self.agent_char):  # The list of expanded states is shuffled randomly; see state.py.
+            for child_state in leaf.get_children(self.agent_char):
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
                     strategy.add_to_frontier(child_state)
             iterations += 1

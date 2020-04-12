@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from collections import deque
 from time import perf_counter
 from heapq import heappush, heappop
+import sys
 
 import memory
 
@@ -43,6 +44,9 @@ class Strategy(metaclass=ABCMeta):
     def frontier_empty(self) -> 'bool': raise NotImplementedError
 
     @abstractmethod
+    def reset_strategy(self) -> None: raise NotImplementedError
+
+    @abstractmethod
     def __repr__(self): raise NotImplementedError
 
 
@@ -69,6 +73,16 @@ class StrategyBFS(Strategy):
 
     def frontier_empty(self) -> 'bool':
         return len(self.frontier) == 0
+
+    def reset_strategy(self) -> None:
+        '''
+        Used to reset the strategy class for a new search
+
+        :return: Nothing
+        '''
+
+        self.frontier.clear()
+        self.frontier_set.clear()
 
     def __repr__(self):
         return 'Breadth-first Search'
