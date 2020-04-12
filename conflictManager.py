@@ -19,17 +19,90 @@ class ConflictManager:
         self.world_state = None
 
 
+    '''
+    For prereqs: Hvis en agent's prereqs ikke er opfyldt så skal den have NoOp, hvis ikke det er et illegalt move
+
+    For effects: 
+
+    '''
+
+    def prereq_check(self,agents: list, agentDict):
+        #temp_state_create skal være kørt forinden dette, så vi kan bruge 
+        #World_state SKAL være opdateret i dette trin
+
+        illegal_movers = []     
+        
+        for agent in agents:
+            action = agent.plan[0]
+            location = [int(x) for x in agentDict[agent.agent_char][1].split(",")]
+            agent_row = location[0]
+            agent_col = location[1]
+
+            new_agent_position = [agent_row+action.agent_dir.d_row,
+                                  agent_col+action.agent_dir.d_col]
+            new_agent_location_string = f'{new_agent_position[0]},{new_agent_position[1]}'
+
+            assigned_boxes = [agent.world_state.sub_goal_box for agent in agents]
+
+            if action.action_type is ActionType.Move:
+                if not self.world_state.is_free(new_agent_location_string):
+                    if new_agent_location_string in self.world_state.agents:
+                        #Giv NoOp, da agenten nok flytter sig snart
+                        agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+                    else:
+                        #Hvis en boks, tjek om stationær:
+                        box_id = self.world_state.boxes[new_agent_location_string][0][2]
+
+                        if box_id in assigned_boxes:
+                            agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+                        else:
+                            #Hvis box er stationær skal der replannes. Input et NoOp, så action ikke fejler bagefter
+                            illegal_movers.append(agent.agent_char)
+                            agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+
+            elif action.action_type is ActionType.Pull:
+                if not self.world_state.is_free(new_agent_location_string):
+                    if new_agent_location_string in self.world_state.agents:
+                        #Giv NoOp, da agenten nok flytter sig snart
+                        agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+                    else:
+                        #Hvis en boks, tjek om stationær:
+                        box_id = self.world_state.boxes[new_agent_location_string][0][2]
+
+                        if box_id in assigned_boxes:
+                            agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+                        else:
+                            #Hvis box er stationær skal der replannes. Input et NoOp, så action ikke fejler bagefter
+                            illegal_movers.append(agent.agent_char)
+                            agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+            elif action.action_type is ActionType.Push:
+                box_loc_string = f'{agent_row+action.agent_dir.d_row+action.box_dir.d_row},{agent_col+action.agent_dir.d_col+action.box_dir.d_col}'
+
+                if not self.world_state.is_free(box_loc_string):
+                    if box_loc_string in self.world_state.agents:
+                        agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+                    else:
+                        box_id = self.world_state.boxes[box_loc_string][0][2]
+
+                        if box_id in assigned_boxes:
+                            agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+                        else:
+                            #Hvis box er stationær skal der replannes. Input et NoOp, så action ikke fejler bagefter
+                           illegal_movers.append(agent.agent_char)
+                           agent.plan.appendleft(Action(ActionType.NoOp, None, None))
+        return illegal_movers
+
+
     #Efter temp_state er blevet konstrueret, skal konflikterne findes. 
     # Når konflikterne er fundet skal vi finde en måde at spore hvile agenter der konflikter 
     # Til sidst finde en måde at løse det på.
 
-    def temp_state_create(self, agents: list):
+
+    def temp_state_create(self, agents: list, agentDict):
         #Kontrollere foreløbigt et enkelt state
-        #antage at world_state bliver opdateret i agent control loop, så     vi hver gang i denne metode har det korrekte billede af miljøet. 
+        #antage at world_state bliver opdateret i agent control loop, så vi hver gang i denne metode har det korrekte billede af miljøet. 
         
         temp_state = State(copy=self.world_state)
-
-        agentDict = temp_state.reverse_agent_dict()
 
         box_agent_match = {}
 
@@ -93,21 +166,20 @@ class ConflictManager:
                 #Remove agent from old location
                 self._remove_element(temp_state.agents, f'{agent_row},{agent_col}')
 
-        return [temp_state,box_agent_match]
+        return [temp_state, box_agent_match]
+
 
     def _remove_element(self, list_elements, position):
         if len(list_elements[position]) > 1:
             list_elements[position].pop(0)
         else:
             list_elements.pop(position)
-
         
    
-    def check_collisions(self, agents):
-        [temp_state,box_agent_match]  = self.temp_state_create(agents)
+    def check_collisions(self, agents:list, agentDict):
+        [temp_state,box_agent_match]  = self.temp_state_create(agents,agentDict)
 
         agent_collisions = []
-        agent_illegal_moves = []
         
         #Check Agents locations against other agents
         for loc, agt in temp_state.agents.items():
@@ -119,43 +191,30 @@ class ConflictManager:
             if len(box) > 1:
                 #Sætter en box kollision i samme liste som en agent kollision (POTENTIEL ÆNDRING)
                 temp = []
-                stationary_box = False
                 for b in box:
-                    #If box exists in box_agent_match, the box has been moved by an agent, and then a NoOp should follow (ÆNDRING PÅ SIGT)
-                    try:
-                        temp.append(box_agent_match[b[2]])
-                    #If box has not been moved, then all agents that moved boxes to this location should make other moves. 
-                    except:
-                        stationary_box = True
-                if stationary_box:
-                    agent_illegal_moves.append(temp)
-                else:
-                    agent_collisions.append(temp)
+                    temp.append(box_agent_match[b[2]])    
+                agent_collisions.append(temp)
 
-          
         #Check agents and boxes:
-        for loc, agt in temp_state.agents.items():
+        for loc, agt in temp_state.agents.items():   
             temp = list(map(lambda x : x[1],agt))
             
-            if len(temp_state.boxes[loc]) > 0:
-                stationary_box = False
+            if len(temp_state.boxes[loc]) > 0:             
                 for box in temp_state.boxes[loc]:
-                    #If box has been moved to loc, include the responsible agent in the conflict tuple
-                    try:
-                        temp.append(box_agent_match[box[2]])
-                    #If box has not been moved, then all agents that moved boxes to this location should make other moves. 
-                    except:
-                        stationary_box = True
-                        
-                if stationary_box:
-                    agent_illegal_moves.append(temp)
-                else:
-                    agent_collisions.append(temp)
-        return [agent_collisions, agent_illegal_moves]
+                    temp.append(box_agent_match[box[2]])
+                agent_collisions.append(temp)
+                
+        return agent_collisions
 
-    def fix_collisions(self,agents):
 
-        [agent_collisions, agent_illegal_moves] = self.check_collisions(agents)
+    def fix_collisions(self, agents):
+
+        agentDict = self.world_state.reverse_agent_dict()
+        
+        agent_illegal_moves = self.prereq_check(agents,agentDict)
+
+        agent_collisions = self.check_collisions(agents,agentDict)
+       
         if len(agent_collisions) == 0:
             return [agent.plan.popleft() for agent in agents]
 
@@ -164,10 +223,9 @@ class ConflictManager:
         
         Løser NoOp assignment-problemet som et LP problem med pakken pulp'''
 
-        #Conflicts = [[1,2],[4,5],[2,3,4]]
-
-        
+        #Conflicts = [[1,2],[4,5],[2,3,4]]    
         #agent_chars = ['a0','a1','a2','a3','a4','a5']
+
         agent_chars = []
         for agent in agents:
             agent_chars.append('a'+str(agent.agent_char))
@@ -184,7 +242,6 @@ class ConflictManager:
         for agt in agents:
             if agt.agent_char in flatto:
                 conflict_agents.append(agt.agent_char)
-
 
         Lp_prob = LpProblem('Problem', LpMaximize)
 
@@ -208,14 +265,14 @@ class ConflictManager:
         for v in Lp_prob.variables():
             results[int(v.name[-1:])] = v.varValue
 
-
         #Ready to push NoOps into plans for agents:
         for agent in agents:
             if agent.agent_char in results:
                 if results[agent.agent_char] == 0:
                     agent.plan.appendleft(Action(ActionType.NoOp, None, None))
-
-        return [agent.plan.popleft() for agent in agents]
+        
+        joint_actions = [agent.plan.popleft() for agent in agents]
+        return [joint_actions, agent_illegal_moves]
                     
                     
 
