@@ -63,7 +63,8 @@ def main():
             print(f'{e.plan[0]} {e.agent_char} before', file=sys.stderr, flush=True)
 
 
-        list_of_actions = conflict_manager.fix_collisions(list_agents)
+        
+        list_of_actions, agent_illegal_moves  = conflict_manager.fix_collisions(list_agents)
 
         # push to server -> list of actions
         my_string = ';'.join(list(str(x) for x in list_of_actions))
