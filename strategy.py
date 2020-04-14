@@ -114,3 +114,35 @@ class StrategyDFS(Strategy):
 
     def __repr__(self):
         return 'Depth-first Search'
+
+
+class StrategyBestFirst(Strategy):
+    def __init__(self, heuristic: 'Heuristic'):
+        super().__init__()
+        self.heuristic = heuristic
+        # Priority queue with heapqueue
+        self.frontier = []
+        self.frontier_set = set()
+
+    def get_and_remove_leaf(self) -> 'State':
+        leaf = heappop(self.frontier)[1]
+        self.frontier_set.remove(leaf)
+        return leaf
+
+    def add_to_frontier(self, state: 'State'):
+
+        temp = (self.heuristic.h(state), state)
+        heappush(self.frontier, temp)
+        self.frontier_set.add(temp[1])
+
+    def in_frontier(self, state: 'State') -> 'bool':
+        return state in self.frontier_set
+
+    def frontier_count(self) -> 'int':
+        return len(self.frontier)
+
+    def frontier_empty(self) -> 'bool':
+        return len(self.frontier) == 0
+
+    def __repr__(self):
+        return 'Best-first Search using {}'.format(self.heuristic)
