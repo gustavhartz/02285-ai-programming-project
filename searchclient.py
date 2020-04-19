@@ -3,7 +3,8 @@ import re
 import sys
 import memory
 import config
-from collections import defaultdict
+from collections import defaultdict, deque
+from itertools import chain
 
 from state import State
 
@@ -11,6 +12,9 @@ from state import State
 class SearchClient:
     def __init__(self, server_messages):
         self.initial_state = None
+        self.max_row = -1
+        self.max_col = -1
+        
 
         try:
             # Read lines for level.
@@ -46,6 +50,7 @@ class SearchClient:
                         line = server_messages.readline()
                     break
                 line = server_messages.readline()
+                
 
 
             # Loading in the level
@@ -55,7 +60,12 @@ class SearchClient:
             row = 0
             box_id = 0
             while line != "#goal\n":
+                self.max_row +=1
                 for col, char in enumerate(line):
+                    if char != '\n':
+                        if col > self.max_col:
+                            self.max_col = col
+
                     if char == '+':
                         self.initial_state.walls[f'{row},{col}'] = True
                     elif char in "0123456789":
@@ -74,6 +84,7 @@ class SearchClient:
                         sys.exit(1)
                 row += 1
                 line = server_messages.readline()
+                
 
             # Getting the goal setting
             row = 0
@@ -105,9 +116,126 @@ class SearchClient:
                               flush=True)
                         sys.exit(1)
                 row += 1
+            self.levelDesigner()    
             print(f'Done with loading data', file=sys.stderr, flush=True)
 
         except Exception as ex:
             print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
             sys.exit(1)
+
+
+    def levelDesigner(self):
+
+        connection_graph = defaultdict(list)
+        for i in range(self.max_row+1):
+            for j in range(self.max_col+1):
+                if f'{i},{j}' not in self.initial_state.walls:
+
+
+                    if i != 0:
+                        if f'{i-1},{j}' not in self.initial_state.walls:
+                           connection_graph[f'{i},{j}'].append(f'{i-1},{j}') 
+
+                    if i != self.max_row:
+                        if f'{i+1},{j}' not in self.initial_state.walls:
+                            connection_graph[f'{i},{j}'].append(f'{i+1},{j}')
+
+                    if j != 0:
+                        if f'{i},{j-1}' not in self.initial_state.walls:
+                           connection_graph[f'{i},{j}'].append(f'{i},{j-1}') 
+
+                    if j != self.max_col:
+                        if f'{i},{j+1}' not in self.initial_state.walls:
+                            connection_graph[f'{i},{j}'].append(f'{i},{j+1}')
+        
+        
+        returned = set()
+        connected_components = []
+        for node in connection_graph:
+            #print(node, file=sys.stderr, flush=True)
+            if node not in returned:
+                cncmp = self.bfs_connected_component(connection_graph,node)
+                connected_components.append(cncmp)
+
+                for cm in cncmp:
+                    returned.add(cm)
+            
+
+        
+        for elem in connected_components:
+            print(elem, file=sys.stderr, flush=True)
+
+
+        #Go over all nodes in the connected_components graph and see if any should be filtered out.
+        #Filtering out is based on the subgraph containing any relevant box- or  agentgoals
+        to_remove = []
+        relevant_level = []
+        for subgraph in connected_components:
+            remove = True
+            for node in subgraph:
+                if node in self.initial_state.goal_positions:
+                    remove = False  
+            if remove:
+                to_remove.append(subgraph)
+            else:
+                relevant_level.append(subgraph)
+        
+        #Flatten list of coordinats to remove
+        all_remove = list(chain.from_iterable(to_remove))
+        
+        #print('to_remove', file=sys.stderr, flush=True)
+        #print(to_remove, file=sys.stderr, flush=True)
+        #print('relevant_level',file=sys.stderr, flush=True)
+        #print(relevant_level,file=sys.stderr, flush=True)
+
+
+
+        #Iterate over agents and boxes in initial state to remove any located in the irrelevant parts of the level
+
+        del_agents = [key for key in self.initial_state.agents.keys() if key in all_remove]
+        del_boxes = [key for key in self.initial_state.boxes.keys() if key in all_remove]
+
+        for loc in del_agents:
+            del self.initial_state.agents[loc]
+
+        for loc in del_boxes:
+            del self.initial_state.boxes[loc]
+
+    
+        '''
+        Nu klar til at kategorisere de relevante felter osv!! 
+        '''
+
+
+    def bfs_connected_component(self, graph, start):
+        # keep track of all visited nodes
+        explored = []
+        # keep track of nodes to be checked
+        queue = deque()
+        queue.append(start)
+    
+        # keep looping until there are nodes still to be checked
+        while queue:
+            node = queue.popleft()
+            if node not in explored:
+                # add node to list of checked nodes
+                explored.append(node)
+                neighbours = graph[node]
+                # add neighbours of node to queue
+                for neighbour in neighbours:
+                    queue.append(neighbour)
+ 
+        return explored
+
+
+
+
+
+        
+
+
+
+
+
+
 
