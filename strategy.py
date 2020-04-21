@@ -83,6 +83,7 @@ class StrategyBFS(Strategy):
 
         self.frontier.clear()
         self.frontier_set.clear()
+        self.explored.clear()
 
     def __repr__(self):
         return 'Breadth-first Search'
@@ -111,6 +112,17 @@ class StrategyDFS(Strategy):
 
     def frontier_empty(self) -> 'bool':
         return len(self.frontier) == 0
+
+    def reset_strategy(self) -> None:
+        '''
+        Used to reset the strategy class for a new search
+
+        :return: Nothing
+        '''
+
+        self.frontier.clear()
+        self.frontier_set.clear()
+        self.explored.clear()
 
     def __repr__(self):
         return 'Depth-first Search'
@@ -143,6 +155,17 @@ class StrategyBestFirst(Strategy):
 
     def frontier_empty(self) -> 'bool':
         return len(self.frontier) == 0
+
+    def reset_strategy(self) -> None:
+        '''
+        Used to reset the strategy class for a new search
+
+        :return: Nothing
+        '''
+
+        self.frontier.clear()
+        self.frontier_set.clear()
+        self.explored.clear()
 
     def __repr__(self):
         return 'Best-first Search using {}'.format(self.heuristic)
