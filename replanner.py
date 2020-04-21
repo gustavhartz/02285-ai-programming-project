@@ -36,14 +36,13 @@ class Replanner(metaclass=ABCMeta):
             agent_row = location[0]
             agent_col = location[1]
             box_not_moved = True
-            action_counter=0
+            action_counter = 0
 
             for action in agent.plan:
                 action_counter += 1
                 if action.action_type is ActionType.Move:
                     if box_not_moved:
                         if self.world_state.is_free(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'):
-
                             agent.search_replanner_heuristic(self.world_state, f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')
                             # Plan to this location from original
                             break
@@ -53,9 +52,14 @@ class Replanner(metaclass=ABCMeta):
                     else:
                         if self.world_state.is_free(
                                 f'{agent_row + action.agent_dir.d_row},{agent_col + action.agent_dir.d_col}') and (self.world_state.is_free(
-                                f'{box_row},{agent_col+action.agent_dir.d_col}')):
+                                f'{box_row},{box_col}')):
 
-                            # Plan to this location from original
+                            # Find box from
+                            agent.search_replanner_heuristic(self.world_state,
+                                                             agent_to=f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}',
+                                                             box_from='2,2',
+                                                             box_to=f'{box_row},{box_col}')
+
                             break
                         elif self.world_state.is_free(
                                 f'{agent_row + action.agent_dir.d_row},{agent_col + action.agent_dir.d_col}') and not (self.world_state.is_free(
