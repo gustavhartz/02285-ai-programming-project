@@ -33,6 +33,7 @@ class State:
         if copy is None:
             # This defaultdict takes as input a string of coordinates an returns true if this posistion is a wall
             self.walls = defaultdict(bool)
+            
 
             # this defaultdict takes as input a string of coordinates and returns a list of size 2 with color,char of the agents
             self.agents = defaultdict(list)
@@ -61,6 +62,13 @@ class State:
             self.g = 0
 
             self.search_init = True
+
+            #Level Design variables
+            self.tunnels = set()
+            self.wells = set()
+            self.junctions = set()
+
+
         else:
             self.walls = copy.walls
             self.goal_positions = copy.goal_positions
@@ -74,6 +82,12 @@ class State:
             self.sub_goal_box = copy.sub_goal_box
             self.g = copy.g
             self.colors_reverse = copy.colors_reverse
+            
+
+            #Level design variables
+            self.tunnels = copy.tunnels
+            self.wells = copy.wells
+            self.junctions = copy.junctions
 
     def is_initial_state(self) -> 'bool':
         return self.parent is None

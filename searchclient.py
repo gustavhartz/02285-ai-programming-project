@@ -130,8 +130,7 @@ class SearchClient:
         for i in range(self.max_row+1):
             for j in range(self.max_col+1):
                 if f'{i},{j}' not in self.initial_state.walls:
-
-
+                    
                     if i != 0:
                         if f'{i-1},{j}' not in self.initial_state.walls:
                            connection_graph[f'{i},{j}'].append(f'{i-1},{j}') 
@@ -151,8 +150,9 @@ class SearchClient:
         
         returned = set()
         connected_components = []
+        
+        #Create list of list of connected components 
         for node in connection_graph:
-            #print(node, file=sys.stderr, flush=True)
             if node not in returned:
                 cncmp = self.bfs_connected_component(connection_graph,node)
                 connected_components.append(cncmp)
@@ -201,10 +201,61 @@ class SearchClient:
         for loc in del_boxes:
             del self.initial_state.boxes[loc]
 
-    
+        
+        
+        
+
+
+        #move_directions
+
+        #dir_moves = [[1,0],[-1,0],[0,1],[0,-1]]
+        #dir_all = [[1,1],[1,0],[1,-1],[0,-1],[-1,-1]‚[-1,0],[-1,1],[0,1]]
+
+        for subgraph in relevant_level:
+            for node in subgraph:
+                
+                num_connections = len(connection_graph[node])
+                
+                if num_connections == 1:
+                    self.initial_state.wells.add(node)
+
+                elif num_connections == 2:
+                    #TODO: Et hjørne bliver nu til en tunnel - opvervej om det er korrekt 
+
+                    self.initial_state.tunnels.add(node)
+
+                #Potential junction
+                elif num_connections == 3: 
+                    ####
+                    ####
+                    #TODO: Definer logik for junction   
+                    ####
+                    ####
+                    pass
+
+        
+        #Transform tunnels into wells where necessary
+        for well in [w for w in self.initial_state.wells]:
+            self.makeWell(connection_graph,well)
+        
+
+
+
+        
+        #TODO Saml op herfra. 
+
+
+
         '''
-        Nu klar til at kategorisere de relevante felter osv!! 
+        Eventuelt implementer at en tunnel er et objekt: Indgang, udgang, længde osv
+        Definer logik for junctions
+        
         '''
+
+
+
+
+
 
 
     def bfs_connected_component(self, graph, start):
@@ -227,6 +278,25 @@ class SearchClient:
  
         return explored
 
+    
+    def makeWell(self, graph, coordinate):
+            
+            #Recursively find and identify wells
+            connects = graph[coordinate]
+            
+            for con in connects:
+                if con in self.initial_state.tunnels:
+                    if con != coordinate:
+
+                        self.initial_state.wells.add(con)
+                        self.initial_state.tunnels.remove(con)
+                        
+                        self.makeWell(graph,con)
+
+                        
+
+        
+         
 
 
 

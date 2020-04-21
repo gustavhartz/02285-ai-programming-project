@@ -52,6 +52,7 @@ class ConflictManager:
 
             ############################################################
             #KUN illegalt move hvis boksen ikke er inkluderet i en plan#
+            #TODO: Passer dette stadig
             assigned_boxes = [agent.world_state.sub_goal_box for agent in agents]
             __assigned_boxes_agent = [[agent.world_state.sub_goal_box, agent.agent_char] for agent in agents]
             __box_visible_replanning = [x for x in self.world_state.boxes.values() if x[2] not in assigned_boxes]
