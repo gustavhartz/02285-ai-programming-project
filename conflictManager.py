@@ -6,6 +6,7 @@ from pulp import *
 import sys
 import utils
 import config
+import math
 from replanner import Replanner
 
 #Squarebrackets på alle kald til dicts
@@ -14,12 +15,16 @@ from replanner import Replanner
 class ConflictManager:
 
 
-    def __init__(self):
+    def __init__(self,agents:list):
 
         '''
         Percept the world with current state
         '''
         self.world_state = None
+        self.blackboard = {}
+
+        self._create_blackboard()
+
 
 
     '''
@@ -28,6 +33,133 @@ class ConflictManager:
     For effects: 
 
     '''
+
+
+    def _create_blackboard(self):
+
+        len_agt = len(self.world_state.agents)
+        len_box = len(self.world_state.boxes)
+
+        time_zero = [0]*(len_agt+len_box)
+
+
+        for loc,agt in self.world_state.agents.items():
+            row, col = loc.split(',')
+            time_zero[agt[0][2]] = (int(row),int(col))
+        for loc,box in self.world_state.boxes.items():
+            row, col = loc.split(',')
+            time_zero[box[0][2] + len_agt] = (int(row),int(col))
+        
+        #TODO: location variablen skal konstisten være str eller tuple 
+        
+        #Insert into the blacboard
+        self.blackboard[0] = time_zero
+
+            
+
+    def update_blackboard(self,agents:list,time:int):
+
+        ##########TODO:
+        ### HUSK AT DENNE TAGER UDGANGSPUNKT I AT KUN EN/1 BOKS 
+        ### KAN VÆRE INKLUDERET I EN PLAN SAMTIDIG
+        ##########
+
+
+
+        '''
+        This method shall be called inside the agent-controll loop, so first time = 1
+        time = Global time step
+        
+        '''
+        len_agents = len(agents)
+
+        min_plan_length = math.inf
+
+        moved_boxes = [False]*len(self.world_state.boxes)
+
+        for agt_id,agent in enumerate(agents):
+            T = time
+
+            if len(agent.plan) < min_plan_length:
+                min_plan_length = len(agent.plan)
+
+            if T not in self.blackboard:
+                self.blackboard[T] = [0] * (len(self.world_state.agents)+len(self.world_state.boxes))
+
+            box_id = None 
+
+            counter = 0
+            while True:
+                #Run through all elements of the plan
+                try:
+                    action = agent.plan[counter]
+                except:
+                    break
+
+                if action.action_type is ActionType.NoOp:
+                    self.blackboard[T][agt_id] = self.blackboard[T-1][agt_id] 
+                    
+                elif action.action_type is ActionType.Move:
+                    agt_row, agt_col = self.blackboard[T-1][agt_id]
+                    
+                    new_agt_row = agt_row + action.agent_dir.d_row
+                    new_agt_col = agt_col + action.agent_dir.d_col
+
+                    self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
+                    
+                elif action.action_type is ActionType.Push:
+                    agt_row, agt_col = self.blackboard[T-1][agt_id]
+                    new_agt_row = agt_row + action.agent_dir.d_row
+                    new_agt_col = agt_col + action.agent_dir.d_col
+
+                    box_row = new_agt_row 
+                    box_col = new_agt_col 
+                    
+                    new_box_row = box_row + action.box_dir.d_row
+                    new_box_col = box_col + action.box_dir.d_col
+
+                    if box_id == None:
+                        box_id =  self.world_state.boxes[f'{box_row},{box_col}'][0][2]
+
+
+                    self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
+                    self.blackboard[T][box_id+len_agents] = (new_box_row,new_box_col)
+
+                    moved_boxes[box_id] = True
+
+                elif action.action_type is ActionType.Pull:
+                    agt_row, agt_col = self.blackboard[T-1][agt_id]
+                    new_agt_row = agt_row + action.agent_dir.d_row
+                    new_agt_col = agt_col + action.agent_dir.d_col
+
+                    box_row = agt_row +  action.box_dir.d_row
+                    box_col = agt_col +  action.box_dir.d_col
+                    
+                    new_box_row = agt_row 
+                    new_box_col = agt_col
+
+                    if box_id == None:
+                        box_id = self.world_state.boxes[f'{box_row},{box_col}'][0][2]
+                    
+                    self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
+                    self.blackboard[T][box_id+len_agents] = (new_box_row,new_box_col)
+
+                    moved_boxes[box_id] = True
+                
+                counter+=1
+                T+=1
+        ##
+        T = time
+        for b_id,moved in enumerate(moved_boxes):
+            if not moved:
+                for i in range(T,T+min_plan_length):
+                    print(i)
+                    self.blackboard[i][b_id+len_agents] = self.blackboard[i-1][b_id+len_agents]
+
+    
+    def delete_from_blackboard(self,time):
+        #Must always be run after sending actions to the server 
+        self.blackboard.pop(time)
 
     def prereq_check(self,agents: list, agentDict):
         #temp_state_create skal være kørt forinden dette, så vi kan bruge 

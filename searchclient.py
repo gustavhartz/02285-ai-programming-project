@@ -69,7 +69,7 @@ class SearchClient:
                     if char == '+':
                         self.initial_state.walls[f'{row},{col}'] = True
                     elif char in "0123456789":
-                        self.initial_state.agents[f'{row},{col}'] = [[self.initial_state.colors[char], int(char)]]
+                        self.initial_state.agents[f'{row},{col}'] = [[self.initial_state.colors[char], int(char),0]]
                     elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
                         self.initial_state.boxes[f'{row},{col}'] = [[self.initial_state.colors[char], char, box_id]]
                         box_id += 1
@@ -191,17 +191,28 @@ class SearchClient:
 
 
         #Iterate over agents and boxes in initial state to remove any located in the irrelevant parts of the level
-
+        #TODO: SKAL vi fjerne agenter og bokse?? Deres ID bliver fucked 
+        '''
+        Angiv at en agent er død, og altså bare skal have NoOp hele vejen igennem. 
+        '''
         del_agents = [key for key in self.initial_state.agents.keys() if key in all_remove]
-        del_boxes = [key for key in self.initial_state.boxes.keys() if key in all_remove]
-
         for loc in del_agents:
             del self.initial_state.agents[loc]
+        a_inter_id = 0
+        for loc,agt in self.initial_state.agents.items():
+            agt[0][2] = a_inter_id
+            a_inter_id+=1
 
+        #Re-indexing of our box_id's 
+        del_boxes = [key for key in self.initial_state.boxes.keys() if key in all_remove]
+        
         for loc in del_boxes:
             del self.initial_state.boxes[loc]
-
         
+        b_id= 0
+        for loc,box in self.initial_state.boxes.items():
+            box[0][2] = b_id
+            b_id+=1        
         
         
 
@@ -235,6 +246,7 @@ class SearchClient:
 
         
         #Transform tunnels into wells where necessary
+        #TODO: Overvej om dette rekursive kald er vejen frem (store levels)
         for well in [w for w in self.initial_state.wells]:
             self.makeWell(connection_graph,well)
         
