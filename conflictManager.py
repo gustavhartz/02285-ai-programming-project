@@ -76,13 +76,13 @@ class ConflictManager:
                             if utils.cityblock_distance(new_agent_location_string, agentDict[__assigned_agent][1]) > config.illegal_move_threshold:
                                 # INITIALIZE REPLAN (FIND ALTERNATIVE ROUTE AROUND OBJECT)
                                 __box_visible_replanning.append(box_id)
-                                illegal_movers.append(agent.agent_char)
+                                illegal_movers.append(agent)
                                 None
                             else:
                                 agent.plan.appendleft(Action(ActionType.NoOp, None, None))
                         else:
                             #Hvis box er stationær skal der replannes. Input et NoOp, så action ikke fejler bagefter
-                            illegal_movers.append(agent.agent_char)
+                            illegal_movers.append(agent)
                             # agent.plan.appendleft(Action(ActionType.NoOp, None, None))
 
             elif action.action_type is ActionType.Pull:
@@ -103,13 +103,13 @@ class ConflictManager:
                                                         agentDict[__assigned_agent][1]) > config.illegal_move_threshold:
                                 # INITIALIZE REPLAN (FIND ALTERNATIVE ROUTE AROUND OBJECT)
                                 __box_visible_replanning.append(box_id)
-                                illegal_movers.append(agent.agent_char)
+                                illegal_movers.append(agent)
                                 None
                             else:
                                 agent.plan.appendleft(Action(ActionType.NoOp, None, None))
                         else:
                             #Hvis box er stationær skal der replannes. Input et NoOp, så action ikke fejler bagefter
-                            illegal_movers.append(agent.agent_char)
+                            illegal_movers.append(agent)
                             # agent.plan.appendleft(Action(ActionType.NoOp, None, None))
             elif action.action_type is ActionType.Push:
                 box_loc_string = f'{agent_row+action.agent_dir.d_row+action.box_dir.d_row},{agent_col+action.agent_dir.d_col+action.box_dir.d_col}'
@@ -129,18 +129,18 @@ class ConflictManager:
                                                         agentDict[__assigned_agent][1]) > config.illegal_move_threshold:
                                 # INITIALIZE REPLAN (FIND ALTERNATIVE ROUTE AROUND OBJECT)
                                 __box_visible_replanning.append(box_id)
-                                illegal_movers.append(agent.agent_char)
+                                illegal_movers.append(agent)
                                 None
                             else:
                                 agent.plan.appendleft(Action(ActionType.NoOp, None, None))
                         else:
                             #Hvis box er stationær skal der replannes. Input et NoOp, så action ikke fejler bagefter
-                           illegal_movers.append(agent.agent_char)
+                           illegal_movers.append(agent)
                            # agent.plan.appendleft(Action(ActionType.NoOp, None, None))
 
         # Create replanning object and handle illegal moves
         Replanner(self.world_state, agents)
-        Replanner.replan_v1(illegal_movers, __box_visible_replanning)
+        Replanner.replan_v1(illegal_movers=illegal_movers, boxes_visible=__box_visible_replanning)
         return illegal_movers
 
 
