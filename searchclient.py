@@ -198,6 +198,7 @@ class SearchClient:
         del_agents = [key for key in self.initial_state.agents.keys() if key in all_remove]
         for loc in del_agents:
             del self.initial_state.agents[loc]
+        
         a_inter_id = 0
         for loc,agt in self.initial_state.agents.items():
             agt[0][2] = a_inter_id

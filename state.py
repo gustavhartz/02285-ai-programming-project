@@ -35,7 +35,7 @@ class State:
             self.walls = defaultdict(bool)
             
 
-            # this defaultdict takes as input a string of coordinates and returns a list of size 2 with color,char of the agents
+            # this defaultdict takes as input a string of coordinates and returns a list of size 3 with color,char of the agents, and internal id
             self.agents = defaultdict(list)
 
             # this default_dict takes as input an agent char an returns a list of string of coordinates with len one
@@ -126,9 +126,10 @@ class State:
 
     def is_free(self, new_position: str) -> 'bool':
         if self.search_init:
-            return (new_position not in self.agents) & (new_position not in self.boxes & new_position not in self.walls)
+            return (new_position not in self.agents) and (new_position not in self.boxes) and (new_position not in self.walls)
         else:
-            return (new_position not in self.walls) & (new_position not in self.boxes)
+            # TODO: Solve the problem of moving into agent locations where the agent is "done"
+            return (new_position not in self.walls) and (new_position not in self.boxes)
 
     def _update_agent_location(self,old_location: str, new_location: str):
         x = self.agents[old_location]
@@ -148,8 +149,6 @@ class State:
         for key, value in self.agents.items():
             if value[0][1] == agentId:
                 agent_location = key
-
-
         children = []
         old_agent_location = [int(x) for x in re.findall(r'\d+', agent_location)]
         old_agent_location_string = f'{old_agent_location[0]},{old_agent_location[1]}'
@@ -173,8 +172,8 @@ class State:
             elif action.action_type is ActionType.Push:
                 if self.box_at(new_agent_location_string):
                     if self.boxes[new_agent_location_string][0][2] == self.sub_goal_box:
-                        new_box_location = f'{new_agent_position[0]+action.box_dir.d_row},{new_agent_position[1] + action.box_dir.d_col}'
 
+                        new_box_location = f'{new_agent_position[0]+action.box_dir.d_row},{new_agent_position[1] + action.box_dir.d_col}'
                         if self.is_free(new_box_location):
                             child = State(copy=self)
                             child._update_agent_location(old_agent_location_string,new_agent_location_string)
@@ -205,8 +204,16 @@ class State:
             temp[value[0][1]] = [value[0][0], key]
         return temp
 
+    
+    def reverse_agent_dict_internal(self):
+        #TODO: HUSK DETNNE ÆNDRING OG SE OM DEN GIVER PROBLEMS senere hen
+        temp = defaultdict(list)
+        for key, value in self.agents.items():
+            temp[value[0][2]] = [value[0][0], key]
+        return temp
+
     def world_state_update(self, actions: list):
-        agentDict = self.reverse_agent_dict()
+        agentDict = self.reverse_agent_dict_internal()
        
         for agentId, action in enumerate(actions):
             location = [int(x) for x in agentDict[agentId][1].split(",")]
@@ -308,15 +315,8 @@ class State:
     # TO DO: Fix this to work on new repr
     def __repr__(self):
         lines = []
-        for row in range(State.MAX_ROW):
-            line = []
-            for col in range(State.MAX_COL):
-                if self.boxes[row][col] is not None: line.append(self.boxes[row][col])
-                elif self.goals[row][col] is not None: line.append(self.goals[row][col])
-                elif self.walls[row][col] is not None: line.append('+')
-                elif self.agent_row == row and self.agent_col == col: line.append('0')
-                else: line.append(' ')
-            lines.append(''.join(line))
+        lines.append(f"{self.boxes} boxes")
+        lines.append(f"{self.agents} agents")
         return '\n'.join(lines)
     
     def __lt__(self, other):
