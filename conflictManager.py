@@ -1,7 +1,7 @@
 
 from state import State
 from action import Action, ActionType, Dir
-from collections import deque
+from collections import deque, defaultdict
 from pulp import *
 import sys
 import utils
@@ -14,7 +14,6 @@ from replanner import Replanner
 
 class ConflictManager:
 
-
     def __init__(self, agents:list):
 
         '''
@@ -22,8 +21,13 @@ class ConflictManager:
         '''
         self.world_state = None
         self.blackboard = {}
+        self.stationary_agents = []
+        self.stationary_boxes = []
+        self.shortest_plan_agt = None #Agent with shortest plan
+
 
         self._create_blackboard()
+       
 
     def _create_blackboard(self):
 
@@ -53,25 +57,29 @@ class ConflictManager:
         ### KAN VÆRE INKLUDERET I EN PLAN SAMTIDIG
         ##########
 
-
-
         '''
-        This method shall be called inside the agent-controll loop, so first time = 1
+        This method shall be called inside the agent-controll loop, so first time = 0
         time = Global time step
         
         '''
         len_agents = len(agents)
-
+        
         min_plan_length = math.inf
 
-        moved_boxes = [False]*len(self.world_state.boxes)
+        for agt in agents:
+            if len(agt.plan) < min_plan_length and len(agt.plan) > 0:
+                min_plan_length = len(agt.plan)
+                self.shortest_plan_agt = agt
+
+        self.stationary_boxes = [True]*len(self.world_state.boxes)
 
         for agt_id,agent in enumerate(agents):
-            T = time
-
-            if len(agent.plan) < min_plan_length:
-                min_plan_length = len(agent.plan)
-
+            
+            ################################
+            #T=time
+            T = time+1
+            ################################
+            
             if T not in self.blackboard:
                 self.blackboard[T] = [0] * (len(self.world_state.agents)+len(self.world_state.boxes))
 
@@ -114,7 +122,7 @@ class ConflictManager:
                     self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
                     self.blackboard[T][box_id+len_agents] = (new_box_row,new_box_col)
 
-                    moved_boxes[box_id] = True
+                    self.stationary_boxes[box_id] = False
 
                 elif action.action_type is ActionType.Pull:
                     agt_row, agt_col = self.blackboard[T-1][agt_id]
@@ -133,17 +141,259 @@ class ConflictManager:
                     self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
                     self.blackboard[T][box_id+len_agents] = (new_box_row,new_box_col)
 
-                    moved_boxes[box_id] = True
+                    self.stationary_boxes[box_id] = False
                 
                 counter+=1
                 T+=1
+        '''
+        for idx, agt in enumerate(agents):
+            if len(agt.plan) == min_plan_length:
+                blackboard[T+min_plan_length+1][idx] = blackboard[T+min_plan_length][idx]
+        '''
         ##
-        T = time
-        for b_id,moved in enumerate(moved_boxes):
-            if not moved:
+        
+        #Extrapolate locations for stationary boxes and agents
+        T = time+1
+        self.stationary_agents = [False]*len(len_agents)
+
+        for idx, agt in enumerate(agents):
+            if len(agt.plan) == 0:
                 for i in range(T,T+min_plan_length):
-                    print(i)
+                    self.stationary_agents[idx] = True
+                    self.blackboard[i][idx] = self.blackboard[i-1][idx]
+
+
+        for b_id,stationary in enumerate(self.stationary_boxes):
+            if stationary:
+                for i in range(T,T+min_plan_length):
                     self.blackboard[i][b_id+len_agents] = self.blackboard[i-1][b_id+len_agents]
+
+
+    def _conflicts_in_blackboard(self,agents:list, min_plan_length, time, len_agents):
+        
+        '''
+        tiem = global time. So start at time+1, so we can check prereq of first action
+        '''
+
+        ################################
+        T = time+1
+        #T = time
+        ################################
+        
+        for i in range(T,T+min_plan_length):
+
+            #Time T = Effect of action at time T
+            #reqrequs check for time T-1, if conflicts, action at time T-1 should be 
+
+            prereq = self.blackboard[i-1]
+            state = self.blackboard[i]
+
+            hashing_prereq = defaultdict(list)
+            
+            for idx,loc in enumerate(state):
+                
+                hashing_prereq[hash(loc)].append(-idx)
+                for p_idx,p_loc in enumerate(prereq):
+                    if p_idx != idx:
+                        hashing_prereq[hash(p_loc)].append(p_idx)
+                
+                for k, v in hashing_prereq.items():
+                    if len(v) > 1:
+                        for obj_id in v:
+                            #Check greater than 0, to avid state-ovject (only look in prereq)
+                            if obj_id >= 0:
+                                #Check if stationary (have not moved from T-1  to T)
+                                if state[obj_id] == prereq[obj_id]:
+                                    #STATIONARY
+                                    ###REPLANNING###
+                                    ####################
+                                    '''
+                                    REPLANNING
+                                    '''
+                                    pass
+
+
+                                else:
+                                    #If idx is an agent
+                                    if idx < len(agents):
+                                        agt = agents[idx]
+                                        
+                                        agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+
+                                        #Update time, input T-1 as first effect time
+                                        self.single_blackboard_update(agt,idx,i-1)
+                                    else:
+                                        #If idx is a box, locate the agent interacting with box and give NoOp
+                                        box_id = idx-len(agents)
+
+                                        agt  = [agt for agt in agents if agt.sub_goal_box == box_id][0]
+
+                                        agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+
+                                        #Update time, input T-1 as first effect time
+                                        self.single_blackboard_update(agt,idx,i-1)
+
+            #blackboard is now updated with all NoOps /or replannings based on prereqs. Now it is time to check for actual collisions
+            state = self.blackboard[T]
+            hashing_state = defaultdict(list)
+
+            for idx,loc in enumerate(state):
+                hashing_state[hash(loc)].append(idx)
+
+            for k, v in hashing_state.items():
+                if len(v) > 1:
+                    
+                    agt_collish = []
+
+                    for idx in v:
+                        if idx < len(agents):
+                            #Add agent to collish list
+                            agt_collish.append(agents(idx))
+
+                        else:
+                            #Else if idx is box, find responsible agent
+                            box_id = idx-len(agents)
+
+                            agt  = [agt for agt in agents if agt.sub_goal_box == box_id][0]
+                            agt_collish.append(agt)
+                    
+                    
+
+                    agt_plan_lens = [len(agt.plan) for agt in agt_collish]
+                    agt_replan = [False]*len(agt_collish)
+                    
+                    maxx = 0
+                    for idx,length in enumerate(agt_plan_lens):
+                        if length > maxx:
+                            maxx = length
+                            ID = idx
+                    agt_replan[ID] = True
+
+                    for idx,replan in enumerate(agt_replan):
+                        if replan:
+                            '''
+                            agt_collish[idx] REPLAN
+                            '''
+                        else:
+                            agt = agt_collish[idx]
+                            agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+
+                            #Update time, input T-1 as first effect time
+                            self.single_blackboard_update(agt,idx,i-1)
+
+
+
+
+    def single_blackboard_update(self,agent, agent_blackboardID, time):
+        
+        '''
+        time = global time before action is performed
+        Hvis der sker kollisioner til tiden fx 6, er det den 5. action i planen som skal ændres, og fremefter
+        '''
+
+
+        
+        len_agents = len(self.world_state.agents)
+        T = time+1
+        #T is time of effect
+
+        if T not in self.blackboard:
+            self.blackboard[T] = [0] * (len(self.world_state.agents)+len(self.world_state.boxes))
+
+        box_id = None 
+
+        agt_id = agent_blackboardID
+
+
+        while True:
+            if (self.blackboard[T][agt_id] == 0) or (T not in self.blackboard):
+                break
+            else:
+                self.blackboard[T][agt_id] = 0
+                T+=1
+
+        T = time+1
+        counter = 0
+        while True:
+            #Run through all elements of the plan
+            try:
+                action = agent.plan[counter]
+            except:
+                break
+
+            if action.action_type is ActionType.NoOp:
+                self.blackboard[T][agt_id] = self.blackboard[T-1][agt_id] 
+                
+            elif action.action_type is ActionType.Move:
+                agt_row, agt_col = self.blackboard[T-1][agt_id]
+                
+                new_agt_row = agt_row + action.agent_dir.d_row
+                new_agt_col = agt_col + action.agent_dir.d_col
+
+                self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
+                
+            elif action.action_type is ActionType.Push:
+                agt_row, agt_col = self.blackboard[T-1][agt_id]
+                new_agt_row = agt_row + action.agent_dir.d_row
+                new_agt_col = agt_col + action.agent_dir.d_col
+
+                box_row = new_agt_row 
+                box_col = new_agt_col 
+                
+                new_box_row = box_row + action.box_dir.d_row
+                new_box_col = box_col + action.box_dir.d_col
+
+                if box_id == None:
+                    box_id =  self.world_state.boxes[f'{box_row},{box_col}'][0][2]
+
+
+                self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
+                self.blackboard[T][box_id+len_agents] = (new_box_row,new_box_col)
+
+            elif action.action_type is ActionType.Pull:
+                agt_row, agt_col = self.blackboard[T-1][agt_id]
+                new_agt_row = agt_row + action.agent_dir.d_row
+                new_agt_col = agt_col + action.agent_dir.d_col
+
+                box_row = agt_row +  action.box_dir.d_row
+                box_col = agt_col +  action.box_dir.d_col
+                
+                new_box_row = agt_row 
+                new_box_col = agt_col
+
+                if box_id == None:
+                    box_id = self.world_state.boxes[f'{box_row},{box_col}'][0][2]
+                
+                self.blackboard[T][agt_id] = (new_agt_row,new_agt_col)
+                self.blackboard[T][box_id+len_agents] = (new_box_row,new_box_col)
+            counter+=1
+            T+=1
+        
+        #If agennt previously had shortest plan, then update stationary locations
+        if agent == self.shortest_plan_agt:
+            T = time+1
+
+            for idx,stationary in enumerate(self.stationary_agents):
+                if stationary:
+                    for i in range(T,T+len(agent.plan)):
+                        self.blackboard[i][idx] = self.blackboard[i-1][idx]
+
+            for b_id,stationary in enumerate(self.stationary_boxes):
+                if stationary:
+                    for i in range(T,T+len(agent.plan)):
+                        self.blackboard[i][b_id+len_agents] = self.blackboard[i-1][b_id+len_agents]
+
+        
+
+
+
+            
+            
+
+
+
+
+        
 
     '''
     For prereqs: Hvis en agent's prereqs ikke er opfyldt så skal den have NoOp, hvis ikke det er et illegalt move
