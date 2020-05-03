@@ -65,7 +65,7 @@ class State:
 
             #Level Design variables
             self.tunnels = set()
-            self.wells = set()
+            self.wells = {}
             self.junctions = set()
 
 

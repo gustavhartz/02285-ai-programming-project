@@ -157,7 +157,7 @@ class ConflictManager:
                                     '''
                                     Fortsæt herfra - implementering af håndtering af forskellige situaionter. Hvis prereq ikke er stationær og så alle mulighederne for walls/tunnels/junctions osv. 
 
-                                    '''
+                                    ''' 
 
 
 

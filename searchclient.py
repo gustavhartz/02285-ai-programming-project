@@ -18,7 +18,7 @@ class SearchClient:
 
         try:
             # Read lines for level.
-            # TO DO: Edit 70x70 init to work with 2**15 x 2**15 maps as described in problem formulation
+            # TODO: Edit 70x70 init to work with 2**15 x 2**15 maps as described in problem formulation
             self.initial_state = State()
             line = server_messages.readline()
 
@@ -59,6 +59,7 @@ class SearchClient:
             line = server_messages.readline()
             row = 0
             box_id = 0
+            connected_component_num = -1
             while line != "#goal\n":
                 self.max_row +=1
                 for col, char in enumerate(line):
@@ -69,9 +70,10 @@ class SearchClient:
                     if char == '+':
                         self.initial_state.walls[f'{row},{col}'] = True
                     elif char in "0123456789":
-                        self.initial_state.agents[f'{row},{col}'] = [[self.initial_state.colors[char], int(char),0]]
+                        internal_agt_id = 0
+                        self.initial_state.agents[f'{row},{col}'] = [[self.initial_state.colors[char], int(char),internal_agt_id,connected_component_num]]
                     elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        self.initial_state.boxes[f'{row},{col}'] = [[self.initial_state.colors[char], char, box_id]]
+                        self.initial_state.boxes[f'{row},{col}'] = [[self.initial_state.colors[char], char, box_id,connected_component_num]]
                         box_id += 1
                     elif char == ' ':
                         # Free cell.
@@ -133,19 +135,19 @@ class SearchClient:
                     
                     if i != 0:
                         if f'{i-1},{j}' not in self.initial_state.walls:
-                           connection_graph[f'{i},{j}'].append(f'{i-1},{j}') 
+                           connection_graph[(i,j)].append((i-1,j))
 
                     if i != self.max_row:
                         if f'{i+1},{j}' not in self.initial_state.walls:
-                            connection_graph[f'{i},{j}'].append(f'{i+1},{j}')
+                            connection_graph[(i,j)].append((i+1,j))
 
                     if j != 0:
                         if f'{i},{j-1}' not in self.initial_state.walls:
-                           connection_graph[f'{i},{j}'].append(f'{i},{j-1}') 
+                           connection_graph[(i,j)].append((i,j-1))
 
                     if j != self.max_col:
                         if f'{i},{j+1}' not in self.initial_state.walls:
-                            connection_graph[f'{i},{j}'].append(f'{i},{j+1}')
+                            connection_graph[(i,j)].append((i,j+1))
         
         
         returned = set()
@@ -191,9 +193,10 @@ class SearchClient:
 
 
         #Iterate over agents and boxes in initial state to remove any located in the irrelevant parts of the level
-        #TODO: SKAL vi fjerne agenter og bokse?? Deres ID bliver fucked 
+        
         '''
-        Angiv at en agent er død, og altså bare skal have NoOp hele vejen igennem. 
+        Slet agenten - husk hvem der slettes så vi kan sende NoOps i main
+        
         '''
         del_agents = [key for key in self.initial_state.agents.keys() if key in all_remove]
         for loc in del_agents:
@@ -213,7 +216,20 @@ class SearchClient:
         b_id= 0
         for loc,box in self.initial_state.boxes.items():
             box[0][2] = b_id
-            b_id+=1        
+            b_id+=1    
+
+
+        #Assign connected component to agents:
+        for loc, agt in self.initial_state.agents:
+            for idx,cncmp in enumerate(connected_components):
+                if loc in cncmp:
+                    agt[3] = idx
+        
+        #Assign connected component to boxes:
+        for loc, box in self.initial_state.boxes:
+            for idx,cncmp in enumerate(connected_components):
+                if loc in cncmp:
+                    box[3] = idx
         
         
 
@@ -229,7 +245,7 @@ class SearchClient:
                 num_connections = len(connection_graph[node])
                 
                 if num_connections == 1:
-                    self.initial_state.wells.add(node)
+                    self.initial_state.wells[node] = 0
 
                 elif num_connections == 2:
                     #TODO: Et hjørne bliver nu til en tunnel - opvervej om det er korrekt 
@@ -249,7 +265,7 @@ class SearchClient:
         #Transform tunnels into wells where necessary
         #TODO: Overvej om dette rekursive kald er vejen frem (store levels)
         for well in [w for w in self.initial_state.wells]:
-            self.makeWell(connection_graph,well)
+            self.makeWell(connection_graph,well,0)
         
 
 
@@ -264,12 +280,6 @@ class SearchClient:
         Definer logik for junctions
         
         '''
-
-
-
-
-
-
 
     def bfs_connected_component(self, graph, start):
         # keep track of all visited nodes
@@ -292,19 +302,19 @@ class SearchClient:
         return explored
 
     
-    def makeWell(self, graph, coordinate):
+    def makeWell(self, graph, coordinate,cost):
             
             #Recursively find and identify wells
             connects = graph[coordinate]
-            
             for con in connects:
                 if con in self.initial_state.tunnels:
                     if con != coordinate:
 
-                        self.initial_state.wells.add(con)
+                        self.initial_state.wells[con] = cost+1
                         self.initial_state.tunnels.remove(con)
                         
-                        self.makeWell(graph,con)
+                        self.makeWell(graph,con,cost+1)
+                    
 
                         
 
