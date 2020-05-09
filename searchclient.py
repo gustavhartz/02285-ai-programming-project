@@ -139,7 +139,7 @@ class SearchClient:
                     
                     if i != 0:
                         if f'{i-1},{j}' not in self.initial_state.walls:
-                           connection_graph[f'{i},{j}')].append(f'{i-1},{j}')
+                           connection_graph[f'{i},{j}'].append(f'{i-1},{j}')
 
                     if i != self.max_row:
                         if f'{i+1},{j}' not in self.initial_state.walls:
