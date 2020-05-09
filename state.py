@@ -256,7 +256,7 @@ class State:
         #TODO: HUSK DETNNE ÆNDRING OG SE OM DEN GIVER PROBLEMS senere hen
         temp = defaultdict(list)
         for key, value in self.agents.items():
-            temp[value[0][2]] = [value[0][0], key]
+            temp[value[0][1]] = [value[0][0], key]
         return temp
 
     def world_state_update(self, actions: list):

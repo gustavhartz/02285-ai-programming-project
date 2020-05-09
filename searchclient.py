@@ -14,7 +14,7 @@ class SearchClient:
         self.initial_state = None
         self.max_row = -1
         self.max_col = -1
-        self.goal_dependencies = []
+        self.goal_dependencies = {}
         
 
         try:
@@ -139,7 +139,7 @@ class SearchClient:
                     
                     if i != 0:
                         if f'{i-1},{j}' not in self.initial_state.walls:
-                           connection_graph[f'{i},{j}')].append(f'{i-1},{j}')
+                           connection_graph[f'{i},{j}'].append(f'{i-1},{j}')
 
                     if i != self.max_row:
                         if f'{i+1},{j}' not in self.initial_state.walls:
@@ -261,27 +261,34 @@ class SearchClient:
         #Transform tunnels into wells where necessary
         #TODO: Overvej om dette rekursive kald er vejen frem (store levels)
 
-        #Also define goal dependencies
-        
+        #Define a list of dependencies in wells
+        dependencies_wrong_order = []
+
         for well in [w for w in self.initial_state.wells]:
             listo = []
             self.makeWell(connection_graph,well,0,listo)
             
             if len(listo)> 0:
-                self.goal_dependencies.append(listo)
+                dependencies_wrong_order.append(listo)
 
         
-        #Iterate over goals, so we can define which goals have dependencies and which does not:
+        #Iterate over goals, add them as individuals if they have no dependencies in the wells
         for loc in self.initial_state.goal_positions:
             not_in = True
-            for dependency in self.goal_dependencies:
+            for dependency in dependencies_wrong_order:
                 if loc in dependency:
                     not_in = False
             
             if not_in:
-                self.goal_dependencies.append([loc])
-        
-        
+                dependencies_wrong_order.append([loc])
+
+
+
+        #Reverse the order and point to a dictionary, so a dependency that were [1,2,3] (1->2->3) becomes
+        #{3: [2,1], 2: [1], 1: []}
+        for element in dependencies_wrong_order:
+            for i in reversed(range(len(element))):
+                self.goal_dependencies[element[i]]=[element[j] for j in reversed(range(i))]
         
 
 
