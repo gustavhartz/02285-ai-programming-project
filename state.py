@@ -52,7 +52,7 @@ class State:
             self.goal_positions = defaultdict(str)
 
             # This is used for dijkstrals and should be none any other time than in preprocessing
-            self.__dijkstras_location = None
+            self._dijkstras_location = None
 
             # BFS from all goal_positions finding neighbouring states.
             # Input tuple(string_goal_position,string_coordinates). Returns int distance found.
@@ -90,7 +90,8 @@ class State:
             self.sub_goal_box = copy.sub_goal_box
             self.g = copy.g
             self.colors_reverse = copy.colors_reverse
-            self.__bfs_location = copy.__bfs_location
+            self._dijkstras_location = copy._dijkstras_location
+            self.dijkstras_map = copy.dijkstras_map
             
 
             #Level design variables
@@ -136,7 +137,7 @@ class State:
     def is_free(self, new_position: str) -> 'bool':
         if self.search_init:
             return (new_position not in self.agents) and (new_position not in self.boxes) and (new_position not in self.walls)
-        elif self.__dijkstras_location is not None:
+        elif self._dijkstras_location is not None:
             return new_position not in self.walls
         else:
             # TODO: Solve the problem of moving into agent locations where the agent is "done"
@@ -214,20 +215,23 @@ class State:
         Gets the move child states of the given state by simulating an agent only allowed to do move actiosn
         :return: list of states (children)
         '''
-
-        agent_location = self.__bfs_location
+        agent_location = self._dijkstras_location
         children = []
         old_agent_location = [int(x) for x in re.findall(r'\d+', agent_location)]
-        old_agent_location_string = f'{old_agent_location[0]},{old_agent_location[1]}'
         for action in MOVE_ACTIONS:
             # Determine if action is applicable.
             new_agent_position = [old_agent_location[0] + action.agent_dir.d_row,
                                   old_agent_location[1] + action.agent_dir.d_col]
             new_agent_location_string = f'{new_agent_position[0]},{new_agent_position[1]}'
 
+            # print(old_agent_location, file=sys.stderr, flush=True)
+            # print(new_agent_location_string, file=sys.stderr, flush=True)
+            # print(self.is_free(new_agent_location_string), file=sys.stderr, flush=True)
+
+
             if self.is_free(new_agent_location_string):
                 child = State(copy=self)
-                child.__dijkstras_location = new_agent_location_string
+                child._dijkstras_location = new_agent_location_string
                 child.parent = self
                 child.action = action
                 child.g += 1
@@ -343,6 +347,8 @@ class State:
             temp = ""
             for row, value in self.goal_positions.items(): temp = temp + str(row)
             _hash = _hash * prime + hash(temp)
+            if self._dijkstras_location is not None:
+                _hash = hash(self._dijkstras_location) * 11
             self._hash = _hash
         return self._hash
     

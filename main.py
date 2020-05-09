@@ -7,7 +7,7 @@ from searchclient import SearchClient
 from agent import search_agent
 from strategy import StrategyBFS, StrategyDFS, StrategyBestFirst
 from goalassignment import *
-from conflictManager import ConflictManager
+# from conflictManager import ConflictManager
 from state import State
 from copy import deepcopy as cp
 from preprocessing import create_dijkstras_map
@@ -39,7 +39,6 @@ def main():
     '''
     Testing assigner 
     '''
-
     preprocessing_current_state = State(client.initial_state)
 
     '''
@@ -50,7 +49,7 @@ def main():
     
     '''
     current_state = State(client.initial_state)
-    current_state. create_dijkstras_map(preprocessing_current_state)
+    current_state.dijkstras_map = create_dijkstras_map(preprocessing_current_state)
 
     # Create list of agents
     list_agents = []

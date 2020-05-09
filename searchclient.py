@@ -118,7 +118,10 @@ class SearchClient:
                               flush=True)
                         sys.exit(1)
                 row += 1
-            self.levelDesigner()    
+
+            # TODO: TESTING - dosent work currently
+            # self.levelDesigner()
+
             print(f'Done with loading data', file=sys.stderr, flush=True)
 
         except Exception as ex:

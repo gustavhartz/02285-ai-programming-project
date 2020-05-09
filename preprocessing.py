@@ -13,8 +13,9 @@ def create_dijkstras_map(state_: State):
         preprocessing_current_state = State(state_)
         strategy = StrategyBFS()
         strategy.reset_strategy()
-        preprocessing_current_state.__dijkstras_location = goal_location
+        preprocessing_current_state._dijkstras_location = goal_location
         strategy.add_to_frontier(preprocessing_current_state)
+
         iterations = 0
         while True:
 
@@ -28,14 +29,16 @@ def create_dijkstras_map(state_: State):
 
             if strategy.frontier_empty():
                 print('Done with dijkstras', file=sys.stderr, flush=True)
+                break
 
             leaf = strategy.get_and_remove_leaf()
 
             # Add element to dict
-            result_dict[(goal_location, leaf.__dijkstras_location)] = leaf.g
+            result_dict[(goal_location, leaf._dijkstras_location)] = leaf.g
 
             strategy.add_to_explored(leaf)
-            for child_state in leaf.get_children():  # The list of expanded states is shuffled randomly; see state.py.
+
+            for child_state in leaf.get_children_dijkstras():  # The list of expanded states is shuffled randomly; see state.py.
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
                     strategy.add_to_frontier(child_state)
             iterations += 1
