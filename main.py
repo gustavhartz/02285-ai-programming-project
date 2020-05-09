@@ -45,7 +45,7 @@ def main():
     Create Dijkstras mapping for all goal location
     
     For all goal_locations do
-        Create BFS From location
+        Create BFS From location and 
     
     '''
     current_state = State(client.initial_state)
