@@ -69,3 +69,8 @@ for agent_dir in (Dir.N, Dir.S, Dir.E, Dir.W):
         if agent_dir is not box_dir:
             # If not same directions.
             ALL_ACTIONS.append(Action(ActionType.Pull, agent_dir, box_dir))
+
+# Grounded actions.
+MOVE_ACTIONS = []
+for agent_dir in (Dir.N, Dir.S, Dir.E, Dir.W):
+    MOVE_ACTIONS.append(Action(ActionType.Move, agent_dir, None))
