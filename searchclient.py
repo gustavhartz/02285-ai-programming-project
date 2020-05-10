@@ -261,18 +261,17 @@ class SearchClient:
         for loc, well in dc(self.initial_state.wells).items():
             listo = []
             #makeWell(self, graph, coordinate,cost,goal_priority_list,well_id):
-            self.makeWell(connection_graph,loc,well[0],listo,well[1])
-            
+            self.makeWell(connection_graph,loc,well[1],listo,well[0])
             if len(listo)> 0:
                 dependencies_wrong_order.append(listo)
 
         #Go through all tunnels, and assign them id's
         tunnel_id = well_id+1
-
+        
         returned = set()
         #Create list of list of connected components 
         for loc in self.initial_state.tunnels:
-            if node not in returned:
+            if loc not in returned:
                 tunnel = self.bfs_tunnels(connection_graph,loc,tunnel_id)
                 tunnel_id+=1
                 for tun in tunnel:
@@ -304,7 +303,8 @@ class SearchClient:
         for loc, tunnel in self.initial_state.tunnels.items():
             self.initial_state.tunnels_reverse[tunnel].append(loc)
 
-        print(self.initial_state.mouths, file=sys.stderr, flush=True)
+        
+        
         for loc, mouth_id in self.initial_state.mouths.items():
             for idx in mouth_id:
                 if idx in self.initial_state.wells_reverse:
@@ -312,9 +312,12 @@ class SearchClient:
                 elif idx in self.initial_state.tunnels_reverse:
                     self.initial_state.tunnels_reverse[idx].append(loc)
                 else:
+                    
                     raise Exception(f'ID mismatch when including mouths in the tunnels/wells, on id: {idx}')
-
-
+        
+        print(f'Wells: {self.initial_state.wells_reverse}',file=sys.stderr,flush=True)
+        print(f'Tunnels: {self.initial_state.tunnels_reverse}',file=sys.stderr,flush=True)
+        
         '''
         Eventuelt implementer at en tunnel er et objekt: Indgang, udgang, længde osv
         Definer logik for junctions
@@ -352,10 +355,7 @@ class SearchClient:
 
             #Recursively find and identify wells
             connects = graph[coordinate]
-            if cost==0:
-                print(graph[coordinate], file=sys.stderr, flush=True)
-                print(coordinate, file=sys.stderr, flush=True)
-
+           
             for con in connects:
                 if con in self.initial_state.tunnels:
                     if con != coordinate:
@@ -365,8 +365,8 @@ class SearchClient:
                         
                         self.makeWell(graph,con,cost+1,goal_priority_list,well_id)
                 elif (con not in self.initial_state.tunnels) and (con not in self.initial_state.wells):
-                    print(con, file=sys.stderr, flush=True)
                     self.initial_state.mouths[con].append(well_id)
+                    
             
 
     def bfs_tunnels(self,graph,start,tunnel_id):
@@ -375,6 +375,8 @@ class SearchClient:
         # keep track of nodes to be checked
         queue = deque()
         queue.append(start)
+
+        self.initial_state.tunnels[start] = tunnel_id
     
         # keep looping until there are nodes still to be checked
         while queue:
@@ -391,7 +393,6 @@ class SearchClient:
                     else:
                         #Neighbour not a tunnel - add to mouths instead    
                         self.initial_state.mouths[neighbour].append(tunnel_id)
- 
         return explored
 
 
