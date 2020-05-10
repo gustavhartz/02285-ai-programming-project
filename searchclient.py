@@ -202,6 +202,8 @@ class SearchClient:
         Slet agenten - husk hvem der slettes så vi kan sende NoOps i main
         
         '''
+        #TODO: HUSK at smide ud til main.py hvilke agenter der er blevet slettet, så vi kan sende en NoOp automatisk 
+
         del_agents = [key for key in self.initial_state.agents.keys() if key in all_remove]
         for loc in del_agents:
             del self.initial_state.agents[loc]
@@ -248,13 +250,15 @@ class SearchClient:
                 
                 num_connections = len(connection_graph[node])
                 
+                well_id = 0
                 if num_connections == 1:
-                    self.initial_state.wells[node] = 0
+                    self.initial_state.wells[node] = [well_id,0]
+                    well_id+=1
 
                 elif num_connections == 2:
                     #TODO: Et hjørne bliver nu til en tunnel - opvervej om det er korrekt 
 
-                    self.initial_state.tunnels.add(node)
+                    self.initial_state.tunnels[node] = -1
 
                 
 
@@ -264,12 +268,27 @@ class SearchClient:
         #Define a list of dependencies in wells
         dependencies_wrong_order = []
 
-        for well in [w for w in self.initial_state.wells]:
+        for loc, well in self.initial_state.wells.items():
             listo = []
-            self.makeWell(connection_graph,well,0,listo)
+            #makeWell(self, graph, coordinate,cost,goal_priority_list,well_id):
+            self.makeWell(connection_graph,loc,well[0],listo,well[1])
             
             if len(listo)> 0:
                 dependencies_wrong_order.append(listo)
+
+
+
+        #Go through all tunnels, and assign them id's
+        tunnel_id = well_id+1
+
+        returned = set()
+        #Create list of list of connected components 
+        for loc in self.initial_state.tunnels:
+            if node not in returned:
+                tunnel = self.bfs_tunnel(connection_graph,loc,tunnel_id)
+                tunnel_id+=1
+                for tun in tunnel:
+                    returned.add(tun)
 
         
         #Iterate over goals, add them as individuals if they have no dependencies in the wells
@@ -289,6 +308,27 @@ class SearchClient:
         for element in dependencies_wrong_order:
             for i in reversed(range(len(element))):
                 self.goal_dependencies[element[i]]=[element[j] for j in reversed(range(i))]
+
+
+        #Reverse lists of wells and tunnels (including the mouths)
+
+        for loc, well in self.initial_state.wells.items():
+            self.initial_state.wells_reverse[well[0]].append[loc]
+
+        for loc, tunnel in self.initial_state.tunnels.items():
+            self.initial_state.tunnels_reverse[tunnel].append[loc]
+
+        
+        for loc, mouth_id in self.initial_state.mouths.items():
+            for idx in mouth_id:
+                if idx in self.initial_state.wells_reverse:
+                    self.initial_state.wells_reverse[idx].append(loc)
+                elif idx in self.initial_state.tunnels_reverse:
+                    self.initial_state.tunnels_reverse[idx].append(loc)
+                else:
+                    raise(f'ID mismatch when including mouths in the tunnels/wells, on id: {idx}')
+
+
         
 
 
@@ -302,6 +342,8 @@ class SearchClient:
         '''
 
     def bfs_connected_component(self, graph, start):
+
+
         # keep track of all visited nodes
         explored = []
         # keep track of nodes to be checked
@@ -322,7 +364,8 @@ class SearchClient:
         return explored
 
     
-    def makeWell(self, graph, coordinate,cost,goal_priority_list):
+
+    def makeWell(self, graph,coordinate,cost,goal_priority_list,well_id):
             
             if coordinate in self.initial_state.goal_positions:
                 goal_priority_list.append(coordinate)
@@ -333,11 +376,39 @@ class SearchClient:
                 if con in self.initial_state.tunnels:
                     if con != coordinate:
 
-                        self.initial_state.wells[con] = cost+1
-                        self.initial_state.tunnels.remove(con)
+                        self.initial_state.wells[con] = [well_id,cost+1]
+                        del self.initial_state.tunnels[con]
                         
-                        self.makeWell(graph,con,cost+1,goal_priority_list)
+                        self.makeWell(graph,con,cost+1,goal_priority_list,well_id)
+                elif (con not in self.initial_state.tunnels) and (con not in self.initial_state.wells):
+                        self.initial_state.mouths[con].append(well_id)
             
+
+    def bfs_tunnels(self,graph,start,tunnel_id):
+        # keep track of all visited nodes
+        explored = []
+        # keep track of nodes to be checked
+        queue = deque()
+        queue.append(start)
+    
+        # keep looping until there are nodes still to be checked
+        while queue:
+            node = queue.popleft()
+            if node not in explored:
+                # add node to list of checked nodes
+                explored.append(node)
+                neighbours = graph[node]
+                # add neighbours of node to queue
+                for neighbour in neighbours:
+                    if neighbour in self.initial_state.tunnels:
+                        queue.append(neighbour)
+                        self.initial_state.tunnels[neighbour] = tunnel_id 
+                    else:
+                        #Neighbour not a tunnel - add to mouths instead    
+                        self.initial_state.mouths[neighbour].append(tunnel_id)
+ 
+        return explored
+
 
                     
 

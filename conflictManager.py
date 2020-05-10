@@ -33,7 +33,7 @@ class ConflictManager:
        
 
 
-    def blackboard_update(self,agents:list):
+    def create_blackboard(self,agents:list):
 
         #ASSUME WORLDSTATE IS UPDATED HERE 
 
@@ -115,7 +115,6 @@ class ConflictManager:
                 stationary_boxes[box_id] = False
 
             #Update coordinates for stationary boxes
-
             for idx, box in enumerate(stationary_boxes):
                 if stationary:
                     blackboard[1][idx+len_agents] = blackboard[0][idx+len_agents] 
@@ -124,7 +123,7 @@ class ConflictManager:
 
     def _blackboard_conflictSolver(self, agents:list):
 
-        blackboard = self.blackboard_update(agents)
+        blackboard = self.create_blackboard(agents)
 
         len_agents = len(agents)
         
@@ -151,19 +150,27 @@ class ConflictManager:
                 if len(v) > 1:
                     for v_id in v:
                         if v_id != idx:
+
+                            #Extract locations of interest (from string)
+                            row_0_v_id,col_0_v_id  = [int(x) for x in blackboard[0][v_id].split(',')]
+                            row_1_v_id,col_1_v_id  = [int(x) for x in blackboard[1][v_id].split(',')]
+                            row_0_idx,col_0_idx = [int(x) for x in blackboard[0][idx].split(',')]
+                            row_1_idx,col_1_idx = [int(x) for x in blackboard[1][idx].split(',')]
+
+
                             
                             #Check if stationary (have not moved from T-1  to T)
                             if blackboard[0][v_id] == blackboard[1][v_id]:
 
                                 #Check WELL. 
-                                if blackboard[0][v_id] in self.world_state.wells:
+                                if f'{row_0_v_id},{col_0_v_id}' in self.world_state.wells:
                                     #If blackboard[0] stationary collision is in well, we have two scenarios: 
                                         #blackboard[1][idx] is also in a well - Then find out who is closest to exit
                                         #blackboard[1] is not in well- then stationary object is guaranteed to be deepest 
 
-                                    if blackboard[0][idx] in self.world_state.wells:
+                                    if f'{row_0_idx},{row_0_idx}' in self.world_state.wells:
                                         #Find deepest agent/box
-                                        if self.world_state.wells[blackboard[0][v_id]] < self.world_state.wells[blackboard[0][idx]]:
+                                        if self.world_state.wells[f'{row_0_v_id},{col_0_v_id}'] < self.world_state.wells[f'{row_0_idx},{row_0_idx}']:
                                             #Stationary object is deepest.
                                             '''
                                             agt.MOVE OUT FROM WELL
@@ -197,7 +204,7 @@ class ConflictManager:
                                         '''
 
                                 #Check TUNNEL
-                                elif blackboard[0][v_id] in self.world_state.tunnels:
+                                elif f'{row_0_v_id},{col_0_v_id}' in self.world_state.tunnels:
                                     '''
                                     if v_id < len_agents:
                                         v_id.MOVE OUT OF idx.plan
@@ -209,7 +216,7 @@ class ConflictManager:
                                     '''
 
                                 #Check JUNCTION
-                                elif blackboard[0][v_id] in self.world_state.junctions:
+                                elif f'{row_0_v_id},{col_0_v_id}' in self.world_state.junctions:
                                     pass
                                 
 
@@ -232,7 +239,7 @@ class ConflictManager:
                                 '''
 
                                 #Check if opposite directions of movement:
-                                if blackboard[0][idx] == blackboard[1][v_id]:
+                                if f'{row_0_idx},{col_0_idx}' == f'{row_1_v_id},{col_1_v_id}':
                                     '''
                                     EVENTUELT: 
                                         if in tunnel/well: 
@@ -275,11 +282,13 @@ class ConflictManager:
                 '''
 
                 #In region of interest?
-                if blackboard[1][loc] in self.world_state.wells:
+                loc_row,loc_col = blackboard[1][loc].split(',')
+
+                if f'{loc_row},{loc_col}' in self.world_state.wells:
                     pass
-                elif blackboard[1][loc] in self.world_state.tunnel:
+                elif f'{loc_row},{loc_col}' in self.world_state.tunnel:
                     pass
-                elif blackboard[1][loc] in self.world_state.juntions:
+                elif f'{loc_row},{loc_col}' in self.world_state.juntions:
                     pass
                 else:
                     #In open space 
@@ -302,7 +311,7 @@ class ConflictManager:
 
 
 
-    def _create_blackboard(self):
+    def _create_blackboard_old(self):
 
         len_agt = len(self.world_state.agents)
         len_box = len(self.world_state.boxes)

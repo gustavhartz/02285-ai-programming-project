@@ -72,9 +72,11 @@ class State:
             self.search_init = True
 
             #Level Design variables
-            self.tunnels = set()
+            self.tunnels = {}
             self.wells = {}
-            self.junctions = set()
+            self.mouths = defaultdict(list)
+            self.tunnels_reverse = defaultdict(list)
+            self.wells_reverse = defaultdict(list)
 
 
         else:
@@ -97,7 +99,9 @@ class State:
             #Level design variables
             self.tunnels = copy.tunnels
             self.wells = copy.wells
-            self.junctions = copy.junctions
+            self.mouths = copy.mouths
+            self.tunnels_reverse = copy.tunnels_reverse
+            self.wells_reverse = copy.wells_reverse
 
     def is_initial_state(self) -> 'bool':
         return self.parent is None
