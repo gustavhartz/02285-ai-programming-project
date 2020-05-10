@@ -5,6 +5,7 @@ import memory
 import config
 from collections import defaultdict, deque
 from itertools import chain
+from copy import deepcopy as dc
 
 from state import State
 
@@ -121,7 +122,7 @@ class SearchClient:
                 row += 1
 
             # TODO: TESTING - dosent work currently
-            # self.levelDesigner()
+            self.levelDesigner()
 
             print(f'Done with loading data', file=sys.stderr, flush=True)
 
@@ -153,7 +154,6 @@ class SearchClient:
                         if f'{i},{j+1}' not in self.initial_state.walls:
                             connection_graph[f'{i},{j}'].append(f'{i},{j+1}')
         
-        
         returned = set()
         connected_components = []
         
@@ -165,12 +165,6 @@ class SearchClient:
 
                 for cm in cncmp:
                     returned.add(cm)
-            
-
-        
-        for elem in connected_components:
-            print(elem, file=sys.stderr, flush=True)
-
 
         #Go over all nodes in the connected_components graph and see if any should be filtered out.
         #Filtering out is based on the subgraph containing any relevant box- or  agentgoals
@@ -188,7 +182,7 @@ class SearchClient:
         
         #Flatten list of coordinats to remove
         all_remove = list(chain.from_iterable(to_remove))
-        
+
         #print('to_remove', file=sys.stderr, flush=True)
         #print(to_remove, file=sys.stderr, flush=True)
         #print('relevant_level',file=sys.stderr, flush=True)
@@ -224,33 +218,29 @@ class SearchClient:
             box[0][2] = b_id
             b_id+=1    
 
-
         #Assign connected component to agents:
-        for loc, agt in self.initial_state.agents:
-            for idx,cncmp in enumerate(connected_components):
+        for loc, agt in self.initial_state.agents.items():
+            for idx, cncmp in enumerate(connected_components):
                 if loc in cncmp:
-                    agt[3] = idx
-        
-        #Assign connected component to boxes:
-        for loc, box in self.initial_state.boxes:
-            for idx,cncmp in enumerate(connected_components):
-                if loc in cncmp:
-                    box[3] = idx
-        
-        
 
+                    agt[0][3] = idx
+        #Assign connected component to boxes:
+        for loc, box in self.initial_state.boxes.items():
+            for idx,cncmp in enumerate(connected_components):
+                if loc in cncmp:
+                    box[0][3] = idx
 
         #move_directions
 
         #dir_moves = [[1,0],[-1,0],[0,1],[0,-1]]
         #dir_all = [[1,1],[1,0],[1,-1],[0,-1],[-1,-1]‚[-1,0],[-1,1],[0,1]]
 
+        well_id = 0
         for subgraph in relevant_level:
             for node in subgraph:
                 
                 num_connections = len(connection_graph[node])
                 
-                well_id = 0
                 if num_connections == 1:
                     self.initial_state.wells[node] = [well_id,0]
                     well_id+=1
@@ -259,24 +249,22 @@ class SearchClient:
                     #TODO: Et hjørne bliver nu til en tunnel - opvervej om det er korrekt 
 
                     self.initial_state.tunnels[node] = -1
+        well_id -= 1
 
                 
-
         #Transform tunnels into wells where necessary
         #TODO: Overvej om dette rekursive kald er vejen frem (store levels)
 
         #Define a list of dependencies in wells
         dependencies_wrong_order = []
 
-        for loc, well in self.initial_state.wells.items():
+        for loc, well in dc(self.initial_state.wells).items():
             listo = []
             #makeWell(self, graph, coordinate,cost,goal_priority_list,well_id):
             self.makeWell(connection_graph,loc,well[0],listo,well[1])
             
             if len(listo)> 0:
                 dependencies_wrong_order.append(listo)
-
-
 
         #Go through all tunnels, and assign them id's
         tunnel_id = well_id+1
@@ -285,12 +273,11 @@ class SearchClient:
         #Create list of list of connected components 
         for loc in self.initial_state.tunnels:
             if node not in returned:
-                tunnel = self.bfs_tunnel(connection_graph,loc,tunnel_id)
+                tunnel = self.bfs_tunnels(connection_graph,loc,tunnel_id)
                 tunnel_id+=1
                 for tun in tunnel:
                     returned.add(tun)
 
-        
         #Iterate over goals, add them as individuals if they have no dependencies in the wells
         for loc in self.initial_state.goal_positions:
             not_in = True
@@ -300,7 +287,6 @@ class SearchClient:
             
             if not_in:
                 dependencies_wrong_order.append([loc])
-
 
 
         #Reverse the order and point to a dictionary, so a dependency that were [1,2,3] (1->2->3) becomes
@@ -313,12 +299,12 @@ class SearchClient:
         #Reverse lists of wells and tunnels (including the mouths)
 
         for loc, well in self.initial_state.wells.items():
-            self.initial_state.wells_reverse[well[0]].append[loc]
+            self.initial_state.wells_reverse[well[0]].append(loc)
 
         for loc, tunnel in self.initial_state.tunnels.items():
-            self.initial_state.tunnels_reverse[tunnel].append[loc]
+            self.initial_state.tunnels_reverse[tunnel].append(loc)
 
-        
+        print(self.initial_state.mouths, file=sys.stderr, flush=True)
         for loc, mouth_id in self.initial_state.mouths.items():
             for idx in mouth_id:
                 if idx in self.initial_state.wells_reverse:
@@ -326,13 +312,7 @@ class SearchClient:
                 elif idx in self.initial_state.tunnels_reverse:
                     self.initial_state.tunnels_reverse[idx].append(loc)
                 else:
-                    raise(f'ID mismatch when including mouths in the tunnels/wells, on id: {idx}')
-
-
-        
-
-
-
+                    raise Exception(f'ID mismatch when including mouths in the tunnels/wells, on id: {idx}')
 
 
         '''
@@ -372,6 +352,10 @@ class SearchClient:
 
             #Recursively find and identify wells
             connects = graph[coordinate]
+            if cost==0:
+                print(graph[coordinate], file=sys.stderr, flush=True)
+                print(coordinate, file=sys.stderr, flush=True)
+
             for con in connects:
                 if con in self.initial_state.tunnels:
                     if con != coordinate:
@@ -381,7 +365,8 @@ class SearchClient:
                         
                         self.makeWell(graph,con,cost+1,goal_priority_list,well_id)
                 elif (con not in self.initial_state.tunnels) and (con not in self.initial_state.wells):
-                        self.initial_state.mouths[con].append(well_id)
+                    print(con, file=sys.stderr, flush=True)
+                    self.initial_state.mouths[con].append(well_id)
             
 
     def bfs_tunnels(self,graph,start,tunnel_id):
