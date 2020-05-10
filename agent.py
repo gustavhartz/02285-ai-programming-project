@@ -46,44 +46,93 @@ class search_agent(Agent):
     def __repr__(self):
         return 'search agent'
 
-    def search_box(self, world_state: 'State', box_from, box_to):
-
-        if world_state.boxes[box_from][0][0] != self.agent_color:
-            raise Exception("Agent cannot move this box")
+    def search_to_box(self, world_state: 'State', box_loc, box_id):
+        if len(world_state.reverse_agent_dict()[self.agent_char]) != 2:
+            raise Exception("No values for agent ")
 
         self.world_state = State(world_state)
         print('Starting search with strategy {}.'.format(self.strategy), file=sys.stderr, flush=True)
 
-        # TODO: CHECK IF STRATEGY REFERS TO THE SAME OBJECT BEFORE IMPLEMENTING MULTI PROC
-
         if self.strategy == StrategyBestFirst:
-            strategy = self.strategy(heuristic.AStar(self.world_state, heuristic_func.h_goalassigner_box,
+            strategy = self.strategy(heuristic.AStar(self.world_state, heuristic_func.h_goalassigner_to_box,
                                                          agent_char=self.agent_char,
-                                                         box_id=self.world_state.boxes[box_from][0][2],
-                                                         box_to=box_to))
+                                                         box_loc=box_loc))
         else:
             strategy = self.strategy()
         # In case there has been a previous search we need to clear the elements in the strategy object
         strategy.reset_strategy()
 
-        # remove
-        for key, value in self.world_state.agents.items():
-            if value[0][1] == self.agent_char:
-                location = key
-
         removed_dict = {k: v for k, v in self.world_state.agents.items() if v[0][1] == self.agent_char}
+
         self.world_state.agents = defaultdict(list, removed_dict)
 
-        for key, value in self.world_state.boxes.items():
-            if key == box_from:
-                box_id = value[0][2]
-
         self.current_box_id = box_id
+
+        removed_dict = {k: v for k, v in self.world_state.boxes.items() if k == box_loc}
+
+        self.world_state.boxes = defaultdict(list, removed_dict)
+
+        strategy.add_to_frontier(state=self.world_state)
+
+        iterations = 0
+        while True:
+            if iterations == 1000:
+                print(strategy.search_status(), file=sys.stderr, flush=True)
+                iterations = 0
+
+            if memory.get_usage() > memory.max_usage:
+                print('Maximum memory usage exceeded.', file=sys.stderr, flush=True)
+                return None
+
+            if strategy.frontier_empty():
+                print('Empty frontier', file=sys.stderr, flush=True)
+                return None
+
+            leaf = strategy.get_and_remove_leaf()
+
+            # We are now adjecent to the box
+            if strategy.heuristic.h(leaf) == 1:
+                self._convert_plan_to_action_list(leaf.extract_plan())
+                break
+
+            strategy.add_to_explored(leaf)
+            x = strategy.explored.pop()
+            strategy.explored.add(x)
+            for child_state in leaf.get_children(self.agent_char):
+                if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
+                    strategy.add_to_frontier(child_state)
+            iterations += 1
+
+    def search_with_box(self, world_state: 'State'):
+
+        # Get current location of box trying to move
+        box_from = _get_box_loc(self.world_state, self.current_box_id)
+
+        if world_state.boxes[box_from][0][0] != self.agent_color:
+            raise Exception("Agent cannot move this box")
+
+        self.world_state = State(world_state)
+
+        if self.strategy == StrategyBestFirst:
+            strategy = self.strategy(heuristic.AStar(self.world_state, heuristic_func.h_goalassigner_with_box,
+                                                         agent_char=self.agent_char,
+                                                         goal_loc=self.goal_job_id,
+                                                         box_id=self.current_box_id))
+        else:
+            strategy = self.strategy()
+        # In case there has been a previous search we need to clear the elements in the strategy object
+        strategy.reset_strategy()
+
+        # Update state so the agent only is aware of itself
+        removed_dict = {k: v for k, v in self.world_state.agents.items() if v[0][1] == self.agent_char}
+        self.world_state.agents = defaultdict(list, removed_dict)
 
         removed_dict = {k: v for k, v in self.world_state.boxes.items() if k == box_from}
         self.world_state.boxes = defaultdict(list, removed_dict)
 
-        self.world_state.sub_goal_box = box_id
+        # make sure we only move this box
+        self.world_state.sub_goal_box = self.current_box_id
+
         strategy.add_to_frontier(state=self.world_state)
 
         iterations = 0
@@ -101,7 +150,7 @@ class search_agent(Agent):
 
             leaf = strategy.get_and_remove_leaf()
 
-            if leaf.is_sub_goal_state_box(box_to, box_id):
+            if leaf.is_sub_goal_state_box(self.goal_job_id, self.current_box_id):
                 self._convert_plan_to_action_list(leaf.extract_plan())
                 break
 
@@ -110,9 +159,6 @@ class search_agent(Agent):
             strategy.explored.add(x)
 
             for child_state in leaf.get_children(self.agent_char):  # The list of expanded states is shuffled randomly; see state.py.
-                # print("child box location value{}".format(child_state.boxes), file=sys.stderr, flush=True)
-                # print("set value{}".format(x.__hash__()), file=sys.stderr, flush=True)
-                # print("child value{}".format(child_state.__hash__()), file=sys.stderr, flush=True)
                 if not strategy.is_explored(child_state) and not strategy.in_frontier(child_state):
                     strategy.add_to_frontier(child_state)
             iterations += 1
