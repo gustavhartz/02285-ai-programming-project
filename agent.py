@@ -37,6 +37,9 @@ class search_agent(Agent):
         self.plan = deque()
         self.current_box_id = None
         self.plan_category = int
+        self.pending_help = False
+        # (helper_agt.agent_char, helper_agt.agent_internal_id)
+        self.helper_id = None
 
         # Used to track which jobs are currently assinged in goalassigner - 'goal_location'
         self.goal_job_id = None
@@ -288,8 +291,8 @@ class search_agent(Agent):
                     strategy.add_to_frontier(child_state)
             iterations += 1
 
-    def search_conflict_bfs_not_in_list(self, world_state: 'State', agent_collision_internal_id, agent_collision_box,
-                                        coordinates: list):
+    def search_conflict_bfs_not_in_list(self, world_state: 'State', agent_collision_internal_id, agent_collision_box, box_id,
+                                        coordinates: list, move_action_allowed=True):
         '''
         This search method uses bfs to find the first location the agent can move to without being in the list
         of coordinate
@@ -301,6 +304,9 @@ class search_agent(Agent):
         :return: None (update the plan of the agent to not interfer with the coordinates give
         '''
 
+        #
+        if box_id is None:
+            move_action_allowed = True
 
         self.world_state = State(world_state)
 
@@ -343,18 +349,24 @@ class search_agent(Agent):
             agt_loc = _get_agt_loc(leaf, self.agent_char)
             box_loc = _get_box_loc(leaf, self.current_box_id)
 
-            if agt_loc not in coordinates and box_loc not in coordinates:
-                raise NotImplementedError('The agent has found a location where it '
-                                          'can move to overwrite original plan and change state')
-                self._convert_plan_to_action_list(leaf.extract_plan())
-                break
+            if box_id is None:
+                if agt_loc not in coordinates:
+                    self._convert_plan_to_action_list(leaf.extract_plan())
+                    break
+            else:
+                if agt_loc not in coordinates and box_loc not in coordinates:
+                    raise NotImplementedError('The agent has found a location where it '
+                                              'can move to overwrite original plan and change state')
+                    self._convert_plan_to_action_list(leaf.extract_plan())
+                    return True
+
 
             strategy.add_to_explored(leaf)
             x = strategy.explored.pop()
             strategy.explored.add(x)
 
             for child_state in leaf.get_children(
-                    self.agent_char):  # The list of expanded states is shuffled randomly; see state.py.
+                    self.agent_char, move_allowed=move_action_allowed):  # The list of expanded states is shuffled randomly; see state.py.
                 # print("child box location value{}".format(child_state.boxes), file=sys.stderr, flush=True)
                 # print("set value{}".format(x.__hash__()), file=sys.stderr, flush=True)
                 # print("child value{}".format(child_state.__hash__()), file=sys.stderr, flush=True)
@@ -376,6 +388,8 @@ class search_agent(Agent):
         if len(self.plan) < 1:
             if hasattr(self, 'world_state'):
                 self.world_state.sub_goal_box = None
+    def _reset_plan(self):
+        self.plan = deque()
 
 
     def __eq__(self, other):

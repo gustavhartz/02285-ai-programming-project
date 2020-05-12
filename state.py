@@ -157,7 +157,7 @@ class State:
         self.boxes.pop(old_location)
         self.boxes[new_location] = x
 
-    def get_children(self, agentId) -> '[State, ...]':
+    def get_children(self, agentId, move_allowed=True) -> '[State, ...]':
         '''
         Returns a list of child states attained from applying every applicable action in the current state.
         The order of the actions is random.
@@ -178,6 +178,9 @@ class State:
             new_agent_col = old_agent_location[1] + action.agent_dir.d_col
 
             if action.action_type is ActionType.Move:
+                # only allow moves with mox
+                if not move_allowed:
+                    continue
                 if self.is_free(new_agent_location_string):
                     child = State(copy=self)
                     child._update_agent_location(old_agent_location_string, new_agent_location_string)
