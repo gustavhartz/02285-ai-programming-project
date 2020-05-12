@@ -194,7 +194,7 @@ class ConflictManager:
 
                                             #Then ask outer (idx) agent to move out of v_id's plan:
                                             #If idx agent hav a box, then only search with push and pull movements
-                                            agt.search_conflict_bfs_not_in_list(self.world_state,v_id,None,agt.current_box_id \
+                                            agt.search_conflict_bfs_not_in_list(self.world_state,v_id,None,agt.current_box_id, \
                                                 self._calculate_plan_coords(agents[v_id],blackboard[0][v_id]), move_action_allowed = False)
 
                                             agents[v_id].plan_category=_cfg.solving_help_task
@@ -279,7 +279,7 @@ class ConflictManager:
 
                                             #Then ask outer (idx) agent to move out of v_id's plan:
                                             #If idx agent hav a box, then only search with push and pull movements
-                                            agt.search_conflict_bfs_not_in_list(self.world_state,v_id,None,agt.current_box_id \
+                                            agt.search_conflict_bfs_not_in_list(self.world_state,v_id,None,agt.current_box_id, \
                                                 self._calculate_plan_coords(agents[v_id],blackboard[0][v_id]), move_action_allowed = False)
 
                                             agents[v_id].plan_category=_cfg.solving_help_task
@@ -334,6 +334,29 @@ class ConflictManager:
 
                                 #If in open space
                                 else:
+                                    #Try to move around. If no plan around object was found in X steps, we ask for the object to be moved. 
+                                    #TODO: Vær sikker på at det virker så vi både kan sende en agent med og uden en boks
+                                    able_to_move = self.replanner.replan_v1(self.world_state,[agt],box_id,[blackboard[0][v_id]])
+                                    
+                                    if not able_to_move:
+                                        if v_id < len_agents:
+
+                                            if box_id is not None:
+                                                #Ask for agent to move out of idx's plan:
+                                                agents[v_id].search_conflict_bfs_not_in_list(world_state = self.world_state, \
+                                                            agent_collision_internal_id = idx, \
+                                                                agent_collision_box = box_id, \
+                                                                    box_id = self.world_state.boxes[blackboard[0][v_id]][2], \
+                                                                        coordinates = self._calculate_plan_coords(agt,blackboard[0][idx]))
+                                        else:
+                                            #Ask to have box removed from idx's plan
+
+
+
+
+
+
+                                    
                                     
 
 
