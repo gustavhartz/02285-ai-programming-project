@@ -100,7 +100,7 @@ class GoalAssigner(Assigner):
                     # Save the task_id (goal_location)
                     solved_tasks.add(task)
 
-        # Find what job are currently getting executed
+        # Find what jobs are currently getting executed
         current_execution = set()
         for agt in self.agents:
             if (agt.goal_job_id is not None) and (agt.goal_job_id not in solved_tasks):
@@ -136,8 +136,13 @@ class GoalAssigner(Assigner):
                 if element.goal_job_id not in current_execution:
                     element.current_box_id = None
                     element.goal_job_id = None
+                elif element.goal_job_id==config.awaiting_help:
+                    if element.helper_id
+                    element.plan.appendleft(Action(ActionType.NoOp, None, None))
+                    pass
                 else:
-                    if element.goal_job_id != 4:
+                    if element.goal_job_id != config.awaiting_help
+                    config.:
                         raise Exception('Goalassigner found non box task l184')
                     assignments_with_box[(element.goal_job_id, box_reversed[element.current_box_id])] = element
                     # TODO: implement search with box - and change other method to search to box
