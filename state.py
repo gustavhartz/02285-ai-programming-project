@@ -92,6 +92,7 @@ class State:
             self.sub_goal_box = copy.sub_goal_box
             self.g = copy.g
             self.colors_reverse = copy.colors_reverse
+            self.colors = copy.colors
             self._dijkstras_location = copy._dijkstras_location
             self.dijkstras_map = copy.dijkstras_map
             

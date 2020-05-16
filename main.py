@@ -3,11 +3,11 @@ import re
 import sys
 import memory
 import config
+from conflictManager import ConflictManager
 from searchclient import SearchClient
 from agent import search_agent
 from strategy import StrategyBFS, StrategyDFS, StrategyBestFirst
 from goalassignment import *
-# from conflictManager import ConflictManager
 from state import State
 from copy import deepcopy as cp
 from preprocessing import create_dijkstras_map
@@ -60,14 +60,14 @@ def main():
             list_agents.append(search_agent(k, v[0], v[2], v[3], StrategyBestFirst))
         else:
             del_agents.append(search_agent(k, v[0], v[2], v[3], StrategyBestFirst))
-    
+
     list_agents_full=list_agents+del_agents
     list_agents_full.sort()
     list_agents.sort()
-    x = GoalAssigner(current_state, list_agents)
-    x.assign_tasks()
+    x = GoalAssigner(current_state, goal_dependencies=client.goal_dependencies, list_of_agents=list_agents)
+    x.reassign_tasks()
 
-    conflict_manager = ConflictManager()
+    conflict_manager = ConflictManager(list_agents)
     
     #Fixing conflict in initial plans
     conflict_manager.world_state = current_state
@@ -93,12 +93,16 @@ def main():
 
 
 
-        print(f"WHILE ENTER {counter}\n", file=sys.stderr, flush=True)
-        print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
-        print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
+        # print(f"WHILE ENTER {counter}\n", file=sys.stderr, flush=True)
+        # print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
+        # print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
 
         for e in list_agents:
-            print(f'{e.plan[0]} {e.agent_char} before', file=sys.stderr, flush=True)
+            if len(e.plan) > 0:
+                print(f'{e.plan[0]} {e.agent_char} before', file=sys.stderr, flush=True)
+            else:
+                print(f'NoPlan for {e.agent_char} before', file=sys.stderr, flush=True)
+
 
         # TODO: Check subgoal for agents - does it need to be updated
 

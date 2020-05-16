@@ -26,10 +26,6 @@ class GoalAssigner(Assigner):
         self.goal_dependencies = goal_dependencies
         self.box_tasks, self.agent_tasks = self.create_tasks()
 
-
-        #TODO: Make sure to initialize this variable in main 
-        self.goal_dependencies = None
-
         # self.color_goals = self.create_color_goals()
 
     def assign_agents(self):
@@ -94,7 +90,7 @@ class GoalAssigner(Assigner):
         # Find goals currently satisfied
         solved_tasks = set()
         for task, values in self.box_tasks.items():
-            if task in self.world_state.boxes.key():
+            if task in self.world_state.boxes.keys():
                 # TODO: change values[3] to refer to correct element (box id)
                 if self.world_state.boxes[task] == values[1]:
                     # Save the task_id (goal_location)
@@ -253,6 +249,6 @@ class GoalAssigner(Assigner):
 
     def _box_reversed(self):
         x = dict()
-        for key, value in self.world_state.boxes():
-            x[value[2]] = [key, value[3]]
+        for key, value in self.world_state.boxes.items():
+            x[value[0][2]] = [key, value[0][3]]
         return x

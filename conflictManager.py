@@ -45,12 +45,11 @@ class ConflictManager:
         len_agents = len(agents)
         stationary_boxes = [True]*len(self.world_state.boxes)
 
-        blackboard = [[],[]]
+        blackboard = [[0]*(len(self.world_state.agents)+len(self.world_state.boxes)),[0]*(len(self.world_state.agents)+len(self.world_state.boxes))]
 
         #Set current corrdinates
         for loc,agt in self.world_state.agents.items():
             row,col = loc.split(',')
-
             blackboard[0][agt[0][2]] = f'{row},{col}'
 
         for loc,box in self.world_state.boxes.items():
@@ -61,7 +60,7 @@ class ConflictManager:
         
         #Set coordinates after 1 action
         for agt in agents: 
-            agt_id = agt[0][2]
+            agt_id = agt.agent_internal_id
 
             try:
                 action = agt.plan[0]
@@ -119,7 +118,7 @@ class ConflictManager:
                 stationary_boxes[box_id] = False
 
             #Update coordinates for stationary boxes
-            for idx, box in enumerate(stationary_boxes):
+            for idx, stationary in enumerate(stationary_boxes):
                 if stationary:
                     blackboard[1][idx+len_agents] = blackboard[0][idx+len_agents] 
         return blackboard
@@ -143,10 +142,15 @@ class ConflictManager:
                 agt = agents[idx]
             else:
                 box_id = idx - len_agents
-                agt = [agt for agt in agents if agt.sub_goal_box == box_id][0]
+                _agt_list = [agt for agt in agents if agt.current_box_id == box_id]
+                if len(_agt_list)>0:
+                    agt = _agt_list[0]
+                else:
+                    continue
+                    # TODO: Require helperagents to have subgoal box value
 
 
-            prereq_state[loc].append(idx)
+            prereq_state[obj].append(idx)
             for p_idx,p_loc in enumerate(blackboard[0]):
                 if p_idx != idx:
                     prereq_state[p_loc].append(p_idx)
@@ -224,7 +228,7 @@ class ConflictManager:
                                                                             'agent_collision_internal_id': None,
                                                                             'agent_collision_box': None,
                                                                             'box_id' : self.world_state.boxes[blackboard[0][v_id]][2],
-                                                                            'coordinates': self.world_state.wells_reverse[self.world_state.wells[blackboard[0][v_id]][0]]
+                                                                            'coordinates': self.world_state.wells_reverse[self.world_state.wells[blackboard[0][v_id]][0]],
                                                                             'move_action_allowed': False
                                                                             }
 
@@ -317,7 +321,7 @@ class ConflictManager:
                                                                             'coordinates':
                                                                                 self.world_state.tunnels_reverse[
                                                                                     self.world_state.tunnels[
-                                                                                        blackboard[0][v_id]][0]]
+                                                                                        blackboard[0][v_id]][0]],
                                                                             'move_action_allowed': False
                                                                             }
 
@@ -395,7 +399,7 @@ class ConflictManager:
                                                                                 'agent_collision_box': None,
                                                                                 'box_id': self.world_state.boxes[
                                                                                     blackboard[0][v_id]][2],
-                                                                                'coordinates': self._calculate_plan_coords(agt,blackboard[0][idx])
+                                                                                'coordinates': self._calculate_plan_coords(agt,blackboard[0][idx]),
                                                                                 'move_action_allowed': False
                                                                                 }
 
@@ -491,7 +495,7 @@ class ConflictManager:
                                     agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                
         #Update blackboard after new actions are pushed that fixes prereqs
-        blackboard = self.blackboard_update(agents)
+        blackboard = self.create_blackboard(agents)
 
 
         #Check actual collisions

@@ -57,7 +57,7 @@ def convert_unassigned_colors_to_walls(world_state:'State'):
 
     to_be_popped=list()
     for location, values in world_state.boxes.items():
-        if values[0] in colors:
+        if values[0][0] in colors:
             to_be_popped.append(location)
             world_state.walls[location] = True
     

@@ -16,12 +16,7 @@ from action import Action, ActionType, Dir
 
 # Super class that all agent classes inharit functions form
 class Agent(metaclass=ABCMeta):
-
-    @abstractmethod
-    def search_box(self, world_state: 'State', box_from, box_to) -> 'Action': raise NotImplementedError
-
-    @abstractmethod
-    def get_actions(self) -> 'Action': raise NotImplementedError
+    None
 
 '''
 Agents are given a goal by a central unit and plan how to achieve this goal themselves
@@ -61,7 +56,7 @@ class search_agent(Agent):
         return 'search agent'
 
     def search_to_box(self, world_state: 'State', box_loc, box_id):
-        if len(world_state.reverse_agent_dict()[self.agent_char]) != 2:
+        if len(world_state.reverse_agent_dict()[self.agent_char]) < 1:
             raise Exception("No values for agent ")
 
         self.world_state = State(world_state)

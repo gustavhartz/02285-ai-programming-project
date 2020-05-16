@@ -20,117 +20,117 @@ class SearchClient:
         self.del_agents_ids = []
         
 
-        try:
-            # Read lines for level.
-            # TODO: Edit 70x70 init to work with 2**15 x 2**15 maps as described in problem formulation
-            self.initial_state = State()
+        # try:
+        # Read lines for level.
+        # TODO: Edit 70x70 init to work with 2**15 x 2**15 maps as described in problem formulation
+        self.initial_state = State()
+        line = server_messages.readline()
+
+        # Get meta data
+        while True:
+
+            if line == "#domain\n":
+                line = server_messages.readline()
+                self.initial_state.domain = line
+
+            elif line == "#levelname\n":
+                line = server_messages.readline()
+                self.initial_state.levelname = line
+
+            elif line == "#colors\n":
+                # self.initial_state.colors = {}
+                # self.initial_state.colors = defaultdict(list)
+                line = server_messages.readline()
+                while "#" not in [c for c in line]:
+                    current_color = line.split(':')[0]
+                    for x in line.split(':')[1].replace(' ','').strip('\n').split(','):
+                        self.initial_state.colors[x] = current_color
+                        if not self.initial_state.colors_reverse[current_color]:
+                            self.initial_state.colors_reverse[current_color] = [x]
+                        else:
+                            y = self.initial_state.colors_reverse[current_color]
+                            y.append(x)
+                            self.initial_state.colors_reverse[current_color] = y
+                    line = server_messages.readline()
+                break
             line = server_messages.readline()
 
-            # Get meta data
-            while True:
 
-                if line == "#domain\n":
-                    line = server_messages.readline()
-                    self.initial_state.domain = line
 
-                elif line == "#levelname\n":
-                    line = server_messages.readline()
-                    self.initial_state.levelname = line
+        # Loading in the level
+        if line != "#initial\n":
+            raise Exception("Problem in parsing")
+        line = server_messages.readline()
+        row = 0
+        box_id = 0
+        connected_component_num = -1
+        while line != "#goal\n":
+            self.max_row +=1
+            for col, char in enumerate(line):
+                if char != '\n':
+                    if col > self.max_col:
+                        self.max_col = col
 
-                elif line == "#colors\n":
-                    # self.initial_state.colors = {}
-                    # self.initial_state.colors = defaultdict(list)
-                    line = server_messages.readline()
-                    while "#" not in [c for c in line]:
-                        current_color = line.split(':')[0]
-                        for x in line.split(':')[1].replace(' ','').strip('\n').split(','):
-                            self.initial_state.colors[x] = current_color
-                            if not self.initial_state.colors_reverse[current_color]:
-                                self.initial_state.colors_reverse[current_color] = [x]
-                            else:
-                                y = self.initial_state.colors_reverse[current_color]
-                                y.append(x)
-                                self.initial_state.colors_reverse[current_color] = y
-                        line = server_messages.readline()
+                if char == '+':
+                    self.initial_state.walls[f'{row},{col}'] = True
+                elif char in "0123456789":
+                    internal_agt_id = 0
+                    self.initial_state.agents[f'{row},{col}'] = [[self.initial_state.colors[char], int(char),internal_agt_id,connected_component_num]]
+                elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    self.initial_state.boxes[f'{row},{col}'] = [[self.initial_state.colors[char], char, box_id,connected_component_num]]
+                    box_id += 1
+                elif char == ' ':
+                    # Free cell.
+                    pass
+                elif char == '\n':
+                    # End of line
                     break
-                line = server_messages.readline()
-                
-
-
-            # Loading in the level
-            if line != "#initial\n":
-                raise Exception("Problem in parsing")
+                else:
+                    print(f'Error, read invalid level character: {char,line} at {row,col}', file=sys.stderr, flush=True)
+                    sys.exit(1)
+            row += 1
             line = server_messages.readline()
-            row = 0
-            box_id = 0
-            connected_component_num = -1
-            while line != "#goal\n":
-                self.max_row +=1
-                for col, char in enumerate(line):
-                    if char != '\n':
-                        if col > self.max_col:
-                            self.max_col = col
 
-                    if char == '+':
-                        self.initial_state.walls[f'{row},{col}'] = True
-                    elif char in "0123456789":
-                        internal_agt_id = 0
-                        self.initial_state.agents[f'{row},{col}'] = [[self.initial_state.colors[char], int(char),internal_agt_id,connected_component_num]]
-                    elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        self.initial_state.boxes[f'{row},{col}'] = [[self.initial_state.colors[char], char, box_id,connected_component_num]]
-                        box_id += 1
-                    elif char == ' ':
-                        # Free cell.
-                        pass
-                    elif char == '\n':
-                        # End of line
-                        break
-                    else:
-                        print(f'Error, read invalid level character: {char,line} at {row,col}', file=sys.stderr, flush=True)
-                        sys.exit(1)
-                row += 1
-                line = server_messages.readline()
-                
 
-            # Getting the goal setting
-            row = 0
-            while line != "#end\n":
-                line = server_messages.readline()
-                for col, char in enumerate(line):
-                    if char == '+':
-                        # nothing to do
-                        pass
-                    elif char in "0123456789":
-                        self.initial_state.agents_goal[int(char)] = [f'{row},{col}']
-                        self.initial_state.goal_positions[f'{row},{col}'] = char
-                    elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        x = self.initial_state.boxes_goal[char]
-                        x.append(f'{row},{col}')
-                        self.initial_state.boxes_goal[char] = x
-                        self.initial_state.goal_positions[f'{row},{col}'] = char
-                    elif char == ' ':
-                        # Free cell.
-                        pass
-                    elif char == '\n':
-                        # End of line
-                        break
-                    elif line == "#end\n":
-                        break
+        # Getting the goal setting
+        row = 0
+        while line != "#end\n":
+            line = server_messages.readline()
+            for col, char in enumerate(line):
+                if char == '+':
+                    # nothing to do
+                    pass
+                elif char in "0123456789":
+                    self.initial_state.agents_goal[int(char)] = [f'{row},{col}']
+                    self.initial_state.goal_positions[f'{row},{col}'] = char
+                elif char in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    x = self.initial_state.boxes_goal[char]
+                    x.append(f'{row},{col}')
+                    self.initial_state.boxes_goal[char] = x
+                    self.initial_state.goal_positions[f'{row},{col}'] = char
+                elif char == ' ':
+                    # Free cell.
+                    pass
+                elif char == '\n':
+                    # End of line
+                    break
+                elif line == "#end\n":
+                    break
 
-                    else:
-                        print(f'Error, read invalid level character: {char, line} at {row, col}', file=sys.stderr,
-                              flush=True)
-                        sys.exit(1)
-                row += 1
+                else:
+                    print(f'Error, read invalid level character: {char, line} at {row, col}', file=sys.stderr,
+                          flush=True)
+                    sys.exit(1)
+            row += 1
 
-            self.levelDesigner()
-            preprocessing.convert_unassigned_colors_to_walls(self.initial_state)
+        self.levelDesigner()
+        preprocessing.convert_unassigned_colors_to_walls(self.initial_state)
 
-            print(f'Done with loading data', file=sys.stderr, flush=True)
+        print(f'Done with loading data', file=sys.stderr, flush=True)
 
-        except Exception as ex:
-            print('Error parsing level: {}.'.format(repr(ex)), file=sys.stderr, flush=True)
-            sys.exit(1)
+        # except Exception as ex:
+        #     print('Error parsing level: {}.'.format(repr(ex.with_traceback())), file=sys.stderr, flush=True)
+        #     sys.exit(1)
 
 
     def levelDesigner(self):
@@ -262,13 +262,12 @@ class SearchClient:
 
         #Define a list of dependencies in wells
         dependencies_wrong_order = []
-        listo=[]
-        #TODO: lav well og tunnels til set() 
-        #makeWell(self, graph, coordinate,cost,goal_priority_list,well_id):
-        self.makeWell(connection_graph,loc,well[1],listo,well[0])
-        if len(listo)> 0:
-            dependencies_wrong_order.append(listo)
-
+        for loc, well in dc(self.initial_state.wells).items():
+            listo = []
+            # makeWell(self, graph, coordinate,cost,goal_priority_list,well_id):
+            self.makeWell(connection_graph, loc, well[1], listo, well[0])
+            if len(listo) > 0:
+                dependencies_wrong_order.append(listo)
         #Go through all tunnels, and assign them id's
         tunnel_id = well_id+1
         

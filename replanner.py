@@ -19,12 +19,21 @@ The goal of the assigner is from a given goal state
 
 class Replanner(metaclass=ABCMeta):
 
-    def __init__(self, world_state: 'State'):
+    def __init__(self, world_state: 'State' = None):
         self.world_state = None
 
     def replan_v1(self, world_state: 'State', agent, assigned_box: int, blocked_location: list):
-        assigned_box=agent.current_box_id
-        _pop = [y for y, x in self.world_state.boxes.items() if (y not in blocked_location) or (x[0][2]==assigned_box)]
+        '''
+        Search around object
+        :param world_state:
+        :param agent:
+        :param assigned_box: Depreciated
+        :param blocked_location:
+        :return:
+        '''
+        self.world_state = State(world_state)
+        assigned_box = agent.current_box_id
+        _pop = [y for y, x in self.world_state.boxes.items() if (y not in blocked_location) or (x[0][2] == assigned_box)]
         agent_dict = self.world_state.reverse_agent_dict()
 
         _agts_in_blocked = [x[0][1] for y, x in self.world_state.agents.items() if (y in blocked_location)]
@@ -69,7 +78,7 @@ class Replanner(metaclass=ABCMeta):
 
             # To prevent to far replanning
             # TODO: make dependent on level size
-            if action_counter> config.max_replanning_depth
+            if action_counter> config.max_replanning_depth:
                 return False
 
             if action.action_type is ActionType.Move:
