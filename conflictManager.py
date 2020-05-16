@@ -564,7 +564,7 @@ class ConflictManager:
         #TODO: Test denne her
         coordinate_list = []
         row,col = [int(x) for x in current_loc.split(',')]
-        
+        coordinate_list.append(f'{row},{col}')
         for action in agent.plan:
             
             if action.action_type is ActionType.NoOp:

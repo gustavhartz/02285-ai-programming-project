@@ -310,6 +310,9 @@ class search_agent(Agent):
         #
         if box_id is None:
             move_action_allowed = True
+        else:
+            # fix for missing boxes in search
+            self.current_box_id = box_id
         
         # test case
         if (box_id is not None) and (utils.cityblock_distance(
@@ -333,6 +336,10 @@ class search_agent(Agent):
 
         # In case there has been a previous search we need to clear the elements in the strategy object
         strategy.reset_strategy()
+
+        # Fix error with state not knowing which box is allowed to be moved
+        self.world_state.sub_goal_box = box_id
+
 
         strategy.add_to_frontier(state=self.world_state)
 
@@ -364,7 +371,6 @@ class search_agent(Agent):
                 break
             else:
                 if agt_loc not in coordinates and box_loc not in coordinates:
-                    
                     self._reset_plan()
                     self._convert_plan_to_action_list(leaf.extract_plan())
                     return True

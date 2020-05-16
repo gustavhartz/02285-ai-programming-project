@@ -135,6 +135,7 @@ class GoalAssigner(Assigner):
                 if (element.plan_category == config.solving_help_task) and (element.pending_task_bool):
                     # Update the world state
                     element.pending_task_dict['world_state'] = self.world_state
+                    print("ENTER", file=sys.stderr, flush=True)
                     element.pending_task_func(**element.pending_task_dict)
                     element.pending_task_bool=False
                     continue
@@ -236,7 +237,6 @@ class GoalAssigner(Assigner):
             v.search_to_box(self.world_state, k[1], k[2])
             # Assign appropiate values
             v.goal_job_id = k[0]
-            print(v.plan, file=sys.stderr , flush=True)
 
     def _delegate_task_with_box(self, assignments):
         '''

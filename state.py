@@ -163,6 +163,7 @@ class State:
         Returns a list of child states attained from applying every applicable action in the current state.
         The order of the actions is random.
         '''
+
         for key, value in self.agents.items():
             if value[0][1] == agentId:
                 agent_location = key

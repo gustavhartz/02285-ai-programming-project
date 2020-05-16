@@ -64,8 +64,8 @@ def main():
     list_agents_full=list_agents+del_agents
     list_agents_full.sort()
     list_agents.sort()
-    x = GoalAssigner(current_state, goal_dependencies=client.goal_dependencies, list_of_agents=list_agents)
-    x.reassign_tasks()
+    goal_assigner = GoalAssigner(current_state, goal_dependencies=client.goal_dependencies, list_of_agents=list_agents)
+    goal_assigner.reassign_tasks()
 
     conflict_manager = ConflictManager(list_agents)
     
@@ -119,9 +119,9 @@ def main():
         # issue noops if agent is still recieving help
 
         #All agents reciving help
-        _agents_reciving_help = [x for x in list_agents if (x.goal_job_id == config.awaiting_help) and (x.pending_help_pendng_plan)]
+        _agents_reciving_help = [x for x in list_agents if (x.plan_category == config.awaiting_help) and (x.pending_help_pending_plan)]
 
-        # If in helping state noop untill tasks solved 
+        # If in helping state noop untill tasks solved
         for x in _agents_reciving_help:
             _awaiting_done=True
             for y in list_agents:
@@ -130,10 +130,12 @@ def main():
                     _awaiting_done=False
                     break
             if _awaiting_done:
+                print('enter', file=sys.stderr,flush=True)
                 x._resume_plan()
 
         # Give task to unassigned agents
-        x.reassign_tasks()
+        goal_assigner.reassign_tasks()
+        print(current_state, file=sys.stderr,flush=True)
         # Solve the new colflicts
         conflict_manager.blackboard_conflictSolver(list_agents)
         for e in list_agents:
