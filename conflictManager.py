@@ -125,8 +125,7 @@ class ConflictManager:
     def blackboard_conflictSolver(self, agents:list):
 
         blackboard = self.create_blackboard(agents)
-
-
+        
         len_agents = len(agents)
         
         #Check prereqs
@@ -154,12 +153,12 @@ class ConflictManager:
                 if p_idx != idx:
                     prereq_state[p_loc].append(p_idx)
 
-            #print(f'idx:{idx}; prereq_state: {prereq_state}',file=sys.stderr,flush=True)
 
             for _,v in prereq_state.items():
                 #If multiple indexes hash to same value, then we have a conflict
                 if len(v) > 1:
-
+                    
+                    #TODO: FIX this shit
                     skip = False
                     #If idx is box, make sure we don't fail on a pull move:
                     if idx >= len_agents:
@@ -169,7 +168,8 @@ class ConflictManager:
                     else:
                         #Fix push move for agents
                         for v_check in v:
-                            if v_check == agt.current_box_id:
+                            #if v_check-len_agents == agt.current_box_id:
+                            if v_check == agt.current_box_id-len_agents:    
                                 skip = True
                     
 

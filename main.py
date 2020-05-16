@@ -143,6 +143,8 @@ def main():
                 print(f'{e.plan[0]} {e.agent_char} after conflict ', file=sys.stderr, flush=True)
             else:
                 print(f'NoPlan for {e.agent_char} after conflict', file=sys.stderr, flush=True)
+
+        print(f'world_satate {current_state}',file=sys.stderr,flush=True)
     
 
         #TODO: Sync here with deleted agents and get their latest actions
