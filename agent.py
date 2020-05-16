@@ -237,7 +237,8 @@ class search_agent(Agent):
         self.world_state = State(world_state)
 
         # TODO: Currently: quick fix to solve agent allowed moves problem - rewrite to allow for agents to move unassigned boxes
-        self.world_state.sub_goal_box = self.world_state.boxes[box_from][0][2]
+        if box_from is not None:
+            self.world_state.sub_goal_box = self.world_state.boxes[box_from][0][2]
 
         # finding our initial location and removing all other elements to increase speed and simplify world
         for key, value in self.world_state.agents.items():

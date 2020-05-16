@@ -55,12 +55,12 @@ def main():
     list_agents = []
     del_agents = []
     for k, v in current_state.reverse_agent_dict().items():
+        print(f'{k},{v}',file=sys.stderr, flush=True)
         if k not in client.del_agents_ids:
             # Char int, color, connectedcomp, strategy
-            list_agents.append(search_agent(k, v[0], v[2], v[3], StrategyBestFirst))
+            list_agents.append(search_agent(k, v[0], v[3], v[2], StrategyBestFirst))
         else:
-            del_agents.append(search_agent(k, v[0], v[2], v[3], StrategyBestFirst))
-
+            del_agents.append(search_agent(k, v[0], v[3], v[2], StrategyBestFirst))
     list_agents_full=list_agents+del_agents
     list_agents_full.sort()
     list_agents.sort()

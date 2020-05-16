@@ -1,4 +1,5 @@
 import re
+import sys
 
 
 def cityblock_distance(pos1, pos2):
@@ -21,8 +22,13 @@ def _remove_element(list_elements, position):
 
 def _get_agt_loc(state, agent_char):
     for key, value in state.agents.items():
-        if value[0][1] == agent_char:
+        if int(value[0][1]) == int(agent_char):
             return key
+            return False
+        else:
+            return key
+            print(f'{agent_char},{value[0][1]}', file=sys.stderr, flush=True)
+    print(state.agents, file=sys.stderr, flush=True)
     raise Exception('Agent not found')
 
 

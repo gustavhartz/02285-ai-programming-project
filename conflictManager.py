@@ -2,7 +2,6 @@
 from state import State
 from action import Action, ActionType, Dir
 from collections import deque, defaultdict
-from pulp import *
 import sys
 import utils
 import config
@@ -126,7 +125,6 @@ class ConflictManager:
     def blackboard_conflictSolver(self, agents:list):
 
         blackboard = self.create_blackboard(agents)
-        print(blackboard, file=sys.stderr, flush=True)
 
 
         len_agents = len(agents)
@@ -353,7 +351,7 @@ class ConflictManager:
                                 else:
                                     #Try to move around. If no plan around object was found in X steps, we ask for the object to be moved. 
                                     #TODO: Vær sikker på at det virker så vi både kan sende en agent med og uden en boks
-                                    able_to_move = self.replanner.replan_v1(self.world_state,[agt],box_id,[blackboard[0][v_id]])
+                                    able_to_move = self.replanner.replan_v1(self.world_state,agt ,box_id,[blackboard[0][v_id]])
                                     
                                     # TODO: Change states and categories to the appropiate values
                                     if not able_to_move:
@@ -420,7 +418,7 @@ class ConflictManager:
                                     if v_id < len_agents:
                                         #Two agents - find out who has the highest priority 
                                         if agt.plan_category >= agents[v_id].plan_category:
-                                            able_to_move = self.replanner.replan_v1(self.world_state,agtents[v_id],None,[blackboard[0][idx]])
+                                            able_to_move = self.replanner.replan_v1(self.world_state,agents[v_id],None,[blackboard[0][idx]])
 
                                             if not able_to_move:
                                                 bool_val = agents[v_id].search_conflict_bfs_not_in_list(world_state = self.world_state, \
@@ -523,13 +521,13 @@ class ConflictManager:
                 prez = -1
                 prez_category = -10
                 for p_id, ag in enumerate(agt_list):
-                    if ag.plan_category > prez_categoy:
+                    if ag.plan_category > prez_category:
                         prez_category = ag.plan_category
                         prez = p_id
 
 
                 for idc, ag in enumerate(agt_list):
-                    if idc != p_id:
+                    if idc != prez:
                         ag.plan.appendleft(Action(ActionType.NoOp, None, None))
 
 

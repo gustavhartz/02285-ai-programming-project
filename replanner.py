@@ -55,10 +55,11 @@ class Replanner(metaclass=ABCMeta):
                 temp_state.boxes.pop(element)
 
         # Remove other agents and let collision avoidance responsebility be at conflictmanager level.
-        __to_be_removed=[]
+        __to_be_removed = []
         for _k, _v in temp_state.agents.items():
-            if _v[0][1] != agent.agent_char or _v[0][1] not in _agts_in_blocked:
-                __to_be_removed.append(_k)
+            if _v[0][1] != agent.agent_char:
+                if _v[0][1] not in _agts_in_blocked:
+                    __to_be_removed.append(_k)
 
         while len(__to_be_removed) > 0:
             temp_state.agents.pop(__to_be_removed.pop())
