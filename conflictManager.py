@@ -154,9 +154,27 @@ class ConflictManager:
                 if p_idx != idx:
                     prereq_state[p_loc].append(p_idx)
 
+            #print(f'idx:{idx}; prereq_state: {prereq_state}',file=sys.stderr,flush=True)
+
             for _,v in prereq_state.items():
                 #If multiple indexes hash to same value, then we have a conflict
                 if len(v) > 1:
+
+                    skip = False
+                    #If idx is box, make sure we don't fail on a pull move:
+                    if idx >= len_agents:
+                        for v_check in v:
+                            if v_check  == agt.agent_internal_id:
+                                skip = True
+                    else:
+                        #Fix push move for agents
+                        for v_check in v:
+                            if v_check == agt.current_box_id:
+                                skip = True
+                    
+
+                    if skip:
+                        continue
                     for v_id in v:
                         if v_id != idx:
 
@@ -607,7 +625,7 @@ class ConflictManager:
         box_loc_id=self.world_state.boxes[box_loc][0][2]
         
         # Temp creation to identify if an agents has this box assigned 
-        x=[(agt.current_box_id, agt) for agt in agents if agents.current_box_id==box_loc_id]
+        x=[(agt.current_box_id, agt) for agt in agents if agt.current_box_id==box_loc_id]
         # Case where box is assigned
         if len(x)>0:
             return x[0][1]

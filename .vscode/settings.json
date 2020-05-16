@@ -5,5 +5,5 @@
         "**/.settings": true,
         "**/.factorypath": true
     },
-    "python.pythonPath": "/usr/local/bin/python3"
+    "python.pythonPath": "/Users/Morten/anaconda3/bin/python"
 }

@@ -197,7 +197,7 @@ class Replanner(metaclass=ABCMeta):
         # TODO: Implement if free location not found (goal location blocked, too far away)
         if not _replanned:
             print(temp_state, file=sys.stderr, flush=True)
-            raise Exception('Goal location blocked or unreachable')
+            #raise Exception('Goal location blocked or unreachable')
             return False
         # print(agent.plan, file=sys.stderr, flush=True)
         # self.color_goals = self.create_color_goals()

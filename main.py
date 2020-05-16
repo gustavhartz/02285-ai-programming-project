@@ -107,7 +107,7 @@ def main():
         # TODO: Check subgoal for agents - does it need to be updated
 
         # Keeps it from getting out of hand while testing
-        if counter == 5:
+        if counter == config.while_counter:
             break
 
         
