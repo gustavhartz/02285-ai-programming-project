@@ -122,9 +122,10 @@ class SearchClient:
                           flush=True)
                     sys.exit(1)
             row += 1
-
-        self.levelDesigner()
+        print()
         preprocessing.convert_unassigned_colors_to_walls(self.initial_state)
+        self.levelDesigner()
+        
 
         print(f'Done with loading data', file=sys.stderr, flush=True)
 

@@ -136,16 +136,19 @@ class GoalAssigner(Assigner):
                 # if the agent is performing a help task
                 if (element.plan_category == config.solving_help_task) and (element.pending_task_bool):
                     # Update the world state
+                    
                     element.pending_task_dict['world_state'] = self.world_state
                     element.pending_task_func(**element.pending_task_dict)
                     element.pending_task_bool=False
                     continue
                 
                 # reset agent to be free
+                print(f'+++++++ WE ENTER , current exec {current_execution}',file=sys.stderr,flush=True)
                 if element.goal_job_id not in current_execution:
-                    print(f'+++++++ PLAN RESET for :  agent {element.agent_char}',file=sys.stderr,flush=True)
+                    
                     element._reset_from_help()
                 elif element.plan_category == config.awaiting_help:
+                    print(f'+++++++ WE ENTER , current exec {current_execution}',file=sys.stderr,flush=True)
                     for _ele in self.agents:
                         # make _ele it's helper
                         if _ele.agent_char == element.helper_id[0]:

@@ -320,14 +320,25 @@ class search_agent(Agent):
         :param coordinates: list of coordinates that the agent is not allowed to be in
         :return: None (update the plan of the agent to not interfer with the coordinates give
         '''
+        d = {'world_state': world_state,
+                                                                            'agent_collision_internal_id': agent_collision_internal_id,
+                                                                            'agent_collision_box': agent_collision_box,
+                                                                            'box_id' : box_id,
+                                                                            'coordinates': coordinates,
+                                                                            'move_action_allowed': move_action_allowed
+                                                                            }
 
+        print(f'>>> {d}',file=sys.stderr,flush=True)
         #
         if box_id is None:
             move_action_allowed = True
+            print(f'>>>>Move=True, box_id=None', file=sys.stderr,flush=True)
         else:
             # fix for missing boxes in search
             self.current_box_id = box_id
         
+        self.goal_job_id = None
+
         # test case
         if (box_id is not None) and (utils.cityblock_distance(
             utils._get_agt_loc(self.world_state,self.agent_char),
@@ -335,12 +346,19 @@ class search_agent(Agent):
             box_id=None
             move_action_allowed = True
 
+            print(f'>>>>Move=True, 332', file=sys.stderr,flush=True)
+
         self.world_state = State(world_state)
+
+        #If agt is asked to move out of someones plan, then include this someone in the planinng
+        if agent_collision_internal_id is not None:
+            self.world_state.redicter_search = True
 
         removed_dict = {k: v for k, v in self.world_state.agents.items() if (v[0][1] == self.agent_char)
                         or (v[0][2] == agent_collision_internal_id)}
 
         self.world_state.agents = defaultdict(list, removed_dict)
+        
 
         removed_dict = {k: v for k, v in self.world_state.boxes.items() if (v[0][2] == self.current_box_id)
                         or (v[0][2] == agent_collision_box)}

@@ -169,7 +169,10 @@ def main():
         goal_assigner.reassign_tasks()
         print(current_state, file=sys.stderr,flush=True)
         # Solve the new colflicts
+        print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
+
         conflict_manager.blackboard_conflictSolver(list_agents)
+        print(f'############## post BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
 
         
         # All agents helping

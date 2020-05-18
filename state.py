@@ -78,6 +78,8 @@ class State:
             self.tunnels_reverse = defaultdict(list)
             self.wells_reverse = defaultdict(list)
 
+            self.redicter_search =False
+
 
         else:
             self.walls = copy.walls
@@ -96,6 +98,7 @@ class State:
             self._dijkstras_location = copy._dijkstras_location
             self.dijkstras_map = copy.dijkstras_map
             
+            self.redicter_search = copy.redicter_search
 
             #Level design variables
             self.tunnels = copy.tunnels
@@ -144,6 +147,9 @@ class State:
             return (new_position not in self.agents) and (new_position not in self.boxes) and (new_position not in self.walls)
         elif self._dijkstras_location is not None:
             return new_position not in self.walls
+        #Variable used when we ask agents to move out of plans
+        elif self.redicter_search:
+            return (new_position not in self.agents) and (new_position not in self.boxes) and (new_position not in self.walls)
         else:
             # TODO: Solve the problem of moving into agent locations where the agent is "done"
             return (new_position not in self.walls) and (new_position not in self.boxes)
