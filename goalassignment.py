@@ -143,30 +143,34 @@ class GoalAssigner(Assigner):
                     continue
                 
                 # reset agent to be free
-                print(f'+++++++ WE ENTER , current exec {current_execution}',file=sys.stderr,flush=True)
-                if element.goal_job_id not in current_execution:
+                print(f'+++++++ before WE ENTER , current exec {current_execution}',file=sys.stderr,flush=True)
+                if element.goal_job_id not in current_execution and element.plan_category != config.awaiting_help:
                     
                     element._reset_from_help()
                 elif element.plan_category == config.awaiting_help:
-                    print(f'+++++++ WE ENTER , current exec {current_execution}',file=sys.stderr,flush=True)
+                    print(f'+++++++ WAITING help , current exec {current_execution}',file=sys.stderr,flush=True)
                     for _ele in self.agents:
                         # make _ele it's helper
                         if _ele.agent_char == element.helper_id[0]:
+                            print(f'FOUND HELPER, ele_agent_char {_ele.agent_char} ', file=sys.stderr,flush=True)
                             break
                     # Is it still solving the help task related to this agent
-                    if _ele.helper_agt_requester_id==element.agent_char:
-                        element.plan.appendleft(Action(ActionType.NoOp, None, None))
 
-                    if element.helper_id[0]:
+                    print(f'_ele.helper_agt_req: {_ele.helper_agt_requester_id}',file=sys.stderr,flush=True)
+                    print(f'_ele.helper_agt_req: {element.agent_char}',file=sys.stderr,flush=True)
+                    if _ele.helper_agt_requester_id==element.agent_char:
+                        print(f'waiting for agent still', file=sys.stderr,flush=True)
                         element.plan.appendleft(Action(ActionType.NoOp, None, None))
-                        pass
+                        continue
+                                            
                 else:
                     if (element.goal_job_id is not None) and (element.goal_job_id not in solved_tasks):
                         print(f'+++++++ WITH BOX for :  agent {element.agent_char}',file=sys.stderr,flush=True)
                         assignments_with_box[element.goal_job_id] = element
                         continue
 
-                
+                #We know agent is not doing anything - open for businees for other jobs. 
+                element._reset_from_help()
                 # We first get the goal_locations still needing boxes
                 # Potential boxes
 

@@ -237,8 +237,8 @@ def main():
             break
         
         # Update the states of goalassigner and conflictmanager
-        conflict_manager.world_state = cp(current_state)
-        GoalAssigner.world_state = cp(current_state)
+        conflict_manager.world_state = State(current_state)
+        GoalAssigner.world_state = State(current_state)
 
         print("\n", file=sys.stderr, flush=True)
         counter += 1

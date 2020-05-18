@@ -330,6 +330,8 @@ class search_agent(Agent):
 
         print(f'>>> {d}',file=sys.stderr,flush=True)
         #
+
+        self.world_state = State(world_state)
         if box_id is None:
             move_action_allowed = True
             print(f'>>>>Move=True, box_id=None', file=sys.stderr,flush=True)
@@ -339,16 +341,28 @@ class search_agent(Agent):
         
         self.goal_job_id = None
 
+        
+
+
+
         # test case
         if (box_id is not None) and (utils.cityblock_distance(
             utils._get_agt_loc(self.world_state,self.agent_char),
             utils._get_box_loc(self.world_state, box_id))>1):
+
+            locc_agt = utils._get_agt_loc(self.world_state,self.agent_char)
+            locc_box = utils._get_box_loc(self.world_state, box_id)
+
+            print(f'locc_agt = {locc_agt}',file=sys.stderr,flush=True)
+            print(f'locc_box = {locc_box}',file=sys.stderr,flush=True)
+
+            print(f'?????????????? city b dist {utils.cityblock_distance(utils._get_agt_loc(self.world_state,self.agent_char),utils._get_box_loc(self.world_state, box_id))}',file=sys.stderr,flush=True)
             box_id=None
             move_action_allowed = True
 
             print(f'>>>>Move=True, 332', file=sys.stderr,flush=True)
 
-        self.world_state = State(world_state)
+        
 
         #If agt is asked to move out of someones plan, then include this someone in the planinng
         if agent_collision_internal_id is not None:

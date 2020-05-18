@@ -257,6 +257,7 @@ class ConflictManager:
                                             #PUSH to agent: Search out of well with the box 
                                             helper_agt.goal_job_id = None
                                             helper_agt.pending_task_bool = True
+                                            helper_agt.helper_agt_requester_id=agt.agent_char
                                             helper_agt.pending_task_func = helper_agt.search_conflict_bfs_not_in_list
                                             helper_agt.pending_task_dict = {'world_state': self.world_state,
                                                                             'agent_collision_internal_id': None,
@@ -363,6 +364,7 @@ class ConflictManager:
                                             #TODO: PUSH TO AGENT
                                             helper_agt.goal_job_id = None
                                             helper_agt.pending_task_bool = True
+                                            helper_agt.helper_agt_requester_id=agt.agent_char
                                             helper_agt.pending_task_func = helper_agt.search_conflict_bfs_not_in_list
                                             helper_agt.pending_task_dict = {'world_state': self.world_state,
                                                                             'agent_collision_internal_id': None,
@@ -415,7 +417,7 @@ class ConflictManager:
                                     else:
                                         b_agt_list = [agt for agt in agents if agt.current_box_id == v_id-len_agents]
                                         if len(b_agt_list) > 0:
-                                            b_agt_loc = blackboard[0][_agt_list[0].agent_internal_id]
+                                            b_agt_loc = blackboard[0][b_agt_list[0].agent_internal_id]
                                             blocked = [blackboard[0][v_id],b_agt_loc]
                                         else:
                                             blocked = [blackboard[0][v_id]]
