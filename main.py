@@ -51,6 +51,8 @@ def main():
     current_state = State(client.initial_state)
     current_state.dijkstras_map = create_dijkstras_map(preprocessing_current_state)
 
+    print(current_state.agents,file=sys.stderr,flush=True)
+
     # Create list of agents
     list_agents = []
     del_agents = []
@@ -61,11 +63,38 @@ def main():
             list_agents.append(search_agent(k, v[0], v[3], v[2], StrategyBestFirst))
         else:
             del_agents.append(search_agent(k, v[0], v[3], v[2], StrategyBestFirst))
+    
+    del_locs = []
+    for del_id in client.del_agents_ids:
+        for loc, agt in current_state.agents.items():
+            if agt[0][1] == del_id:
+                del_locs.append(loc)
+
+    for loc in del_locs:
+        del current_state.agents[loc]
+    
     list_agents_full=list_agents+del_agents
     list_agents_full.sort()
     list_agents.sort()
+
+    #Creating internal id's
+    a_inter_id = 0
+    for agt in list_agents:
+        agt.agent_internal_id = a_inter_id
+        a_inter_id+=1
+    
+    for k,v in current_state.agents.items():
+        for agt in list_agents:
+            if v[0][1]==agt.agent_char:
+                current_state.agents[k][0][2] = agt.agent_internal_id
+
+    
+
     goal_assigner = GoalAssigner(current_state, goal_dependencies=client.goal_dependencies, list_of_agents=list_agents)
     goal_assigner.reassign_tasks()
+
+    for agt in list_agents:
+        print(f'agt_char = {agt.agent_char}, inter_id= {agt.agent_internal_id}, box_assign = {agt.current_box_id}',file=sys.stderr,flush=True)
 
     conflict_manager = ConflictManager(list_agents)
     
@@ -73,6 +102,7 @@ def main():
     conflict_manager.world_state = current_state
     conflict_manager.blackboard_conflictSolver(list_agents)
 
+    print('--------------------- while enter --------------------------',file=sys.stderr,flush=True)
 
     # Whileloop
     counter = 0
@@ -171,7 +201,8 @@ def main():
             else:
                 print(f'NoPlan for {e.agent_char} after conflict', file=sys.stderr, flush=True)
 
-        print(f'world_satate {current_state}',file=sys.stderr,flush=True)
+        print(f'- world_state agents before actions:  {current_state.agents}',file=sys.stderr,flush=True)
+        print(f'- world_state boxes before actions:  {current_state.boxes}',file=sys.stderr,flush=True)
     
 
         #TODO: Sync here with deleted agents and get their latest actions
@@ -191,8 +222,11 @@ def main():
             if resp == 'false':
                 raise Exception("[FATAL ERROR] received false response from server")
 
-        current_state.world_state_update(list_of_actions)
-        
+        current_state.world_state_update(list_of_actions,client.del_agents_ids)
+
+        print(f'- World_satate after actions: {current_state.agents}',file=sys.stderr,flush=True)
+        print(f'- world_state boxes after actions:  {current_state.boxes}',file=sys.stderr,flush=True)
+
 
         if current_state.world_is_goal_state():
             print("Done", file=sys.stderr, flush=True)

@@ -125,6 +125,7 @@ class ConflictManager:
     def blackboard_conflictSolver(self, agents:list):
 
         blackboard = self.create_blackboard(agents)
+        print(f'blackboard{blackboard}',file=sys.stderr,flush=True)
         
         len_agents = len(agents)
         
@@ -236,10 +237,13 @@ class ConflictManager:
                                         
                                         #If no agent was found, just wait until someone becomes available
                                         if helper_agt is None:
-                                            agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+                                            self.agent_amnesia(agt)
+                                            
+                                            #TODO: not final solution
+                                            #agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                         else:
                                             #One agent has bee found as helper.
-
+                                            
                                             #Helper agent now computes route to box, and then how to get the box out of the well
                                             helper_agt.plan_category = _cfg.solving_help_task
                                             helper_agt._reset_plan()
@@ -247,6 +251,7 @@ class ConflictManager:
                                             helper_agt.search_to_box(self.world_state, blackboard[0][v_id],v_id)
                                             
                                             #PUSH to agent: Search out of well with the box 
+                                            helper_agt.goal_job_id = None
                                             helper_agt.pending_task_bool = True
                                             helper_agt.pending_task_func = helper_agt.search_conflict_bfs_not_in_list
                                             helper_agt.pending_task_dict = {'world_state': self.world_state,
@@ -256,28 +261,30 @@ class ConflictManager:
                                                                             'coordinates': self.world_state.wells_reverse[self.world_state.wells[blackboard[0][v_id]][0]],
                                                                             'move_action_allowed': False
                                                                             }
-
-
-                                            #Current agent now has to plan how to get out from well
-                                            agt.pending_help = True
-                                            agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
-                                            agt.plan_category = _cfg.awaiting_help   
-                                            if box_id is not None:
-                                                agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
-                                                        agent_collision_internal_id = None, \
-                                                            agent_collision_box = None, \
-                                                                box_id = box_id, \
-                                                                    coordinates = self.world_state.wells_reverse[self.world_state.wells[blackboard[0][v_id]][0]], \
-                                                                        move_action_allowed = False)
                                             
-                                            else:
-                                                #If agt have not box, then search alone
-                                                agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
-                                                        agent_collision_internal_id = None, \
-                                                            agent_collision_box = None, \
-                                                                box_id = None, \
-                                                                    coordinates = self.world_state.wells_reverse[self.world_state.wells[blackboard[0][v_id]][0]])
-                                            
+                                            if helper_agt.agent_char != agt.agent_char:
+                                                #Current agent now has to plan how to get out from well
+                                                agt.pending_help = True
+                                                agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
+                                                agt.plan_category = _cfg.awaiting_help 
+                                                
+                                                
+                                                if box_id is not None:
+                                                    agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
+                                                            agent_collision_internal_id = None, \
+                                                                agent_collision_box = None, \
+                                                                    box_id = box_id, \
+                                                                        coordinates = self.world_state.wells_reverse[self.world_state.wells[blackboard[0][v_id]][0]], \
+                                                                            move_action_allowed = False)
+                                                
+                                                else:
+                                                    #If agt have not box, then search alone
+                                                    agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
+                                                            agent_collision_internal_id = None, \
+                                                                agent_collision_box = None, \
+                                                                    box_id = None, \
+                                                                        coordinates = self.world_state.wells_reverse[self.world_state.wells[blackboard[0][v_id]][0]])
+                                                
                                             #TODO: Skal måske tilføjes igen:
                                             '''
                                             #Push as many NoOps as the helper_agt will take to solve the current help-plan
@@ -323,7 +330,10 @@ class ConflictManager:
                                         
                                         #If no agent was found, just wait until someone becomes available
                                         if helper_agt is None:
-                                            agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+                                            self.agent_amnesia(agt)
+
+                                            #TODO: not final
+                                            #agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                         else:
                                             #One agent has been found as helper.
 
@@ -335,7 +345,7 @@ class ConflictManager:
                                             
                                             #Search out of tunnel with the box 
                                             #TODO: PUSH TO AGENT
-                                                                                        # 
+                                            helper_agt.goal_job_id = None
                                             helper_agt.pending_task_bool = True
                                             helper_agt.pending_task_func = helper_agt.search_conflict_bfs_not_in_list
                                             helper_agt.pending_task_dict = {'world_state': self.world_state,
@@ -346,32 +356,32 @@ class ConflictManager:
                                                                             'coordinates':
                                                                                 self.world_state.tunnels_reverse[
                                                                                     self.world_state.tunnels[
-                                                                                        blackboard[0][v_id]][0]],
+                                                                                        blackboard[0][v_id]]],
                                                                             'move_action_allowed': False
                                                                             }
 
 
                                             #Current agent now has to plan how to get out from well
-                                            
-                                            agt.pending_help = True
-                                            agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
-                                            agt.plan_category = _cfg.awaiting_help   
-                                            if box_id is not None:
-                                                agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
-                                                        agent_collision_internal_id = None, \
-                                                            agent_collision_box = None, \
-                                                                box_id = box_id, \
-                                                                    coordinates = self.world_state.tunnels_reverse[self.world_state.tunnels[blackboard[0][v_id]][0]], \
-                                                                        move_action_allowed = False)
-                                            
-                                            else:
-                                                #If agt have not box, then search alone
-                                                agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
-                                                        agent_collision_internal_id = None, \
-                                                            agent_collision_box = None, \
-                                                                box_id = None, \
-                                                                    coordinates = self.world_state.tunnels_reverse[self.world_state.tunnels[blackboard[0][v_id]][0]])
-                                 
+                                            if helper_agt.agent_char != agt.agent_char:
+                                                agt.pending_help = True
+                                                agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
+                                                agt.plan_category = _cfg.awaiting_help   
+                                                if box_id is not None:
+                                                    agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
+                                                            agent_collision_internal_id = None, \
+                                                                agent_collision_box = None, \
+                                                                    box_id = box_id, \
+                                                                        coordinates = self.world_state.tunnels_reverse[self.world_state.tunnels[blackboard[0][v_id]]], \
+                                                                            move_action_allowed = False)
+                                                
+                                                else:
+                                                    #If agt have not box, then search alone
+                                                    agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
+                                                            agent_collision_internal_id = None, \
+                                                                agent_collision_box = None, \
+                                                                    box_id = None, \
+                                                                        coordinates = self.world_state.tunnels_reverse[self.world_state.tunnels[blackboard[0][v_id]]])
+                                    
 
                                 #If in open space
                                 else:
@@ -423,12 +433,18 @@ class ConflictManager:
                                             
                                             #If no agent was found, just wait until someone becomes available
                                             if helper_agt is None:
-                                                agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+                                                self.agent_amnesia(agt)
+
+                                                #TODO: not final
+                                                #agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                             else:
-                                                #One agent has bee found as helper.
+                                                #One agent has been found as helper.
 
                                                 #Helper agent now computes route to box, and then how to get the box out of the well
                                                 helper_agt.plan_category = _cfg.solving_help_task
+
+                                                plan_coords = self._calculate_plan_coords(agt,blackboard[0][agt.agent_internal_id])
+                                                
                                                 helper_agt._reset_plan()
 
                                                 #TODO: søg på et andet punkt tæt på boksen
@@ -436,6 +452,7 @@ class ConflictManager:
                                                 helper_agt.search_to_box(self.world_state, blackboard[0][v_id],v_id-len_agents)
                                                 
                                                 #Push next job to agent: Search out of well with the box
+                                                helper_agt.goal_job_id = None
                                                 helper_agt.pending_task_bool = True
                                                 helper_agt.helper_agt_requester_id=agt.agent_char
                                                 helper_agt.pending_task_func = helper_agt.search_conflict_bfs_not_in_list
@@ -443,7 +460,7 @@ class ConflictManager:
                                                                                 'agent_collision_internal_id': None,
                                                                                 'agent_collision_box': None,
                                                                                 'box_id': self.world_state.boxes[blackboard[0][v_id]][0][2],
-                                                                                'coordinates': self._calculate_plan_coords(agt,blackboard[0][agt.agent_internal_id]),
+                                                                                'coordinates': plan_coords,
                                                                                 'move_action_allowed': False
                                                                                 }
                                                 
@@ -451,11 +468,10 @@ class ConflictManager:
                                                 print(f'helper agent box id: {helper_agt.current_box_id}',file=sys.stderr,flush=True)
 
                                                 #Current agent now gets NoOps in main until helping task is solved
-                                                #TODO: I main loop, fang hvis denne variable er true så skub NoOps. 
-                                                #TODO: Når agt = helper_id har plan.len = 0, så skal agt.pending_help_pendng_plan = False 
-                                                agt.pending_help_pending_plan = True
-                                                agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
-                                                agt.plan_category = _cfg.awaiting_help   
+                                                if helper_agt.agent_char != agt.agent_char:
+                                                    agt.pending_help_pending_plan = True
+                                                    agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
+                                                    agt.plan_category = _cfg.awaiting_help   
                                                                                    
                             else:
                                 #NOT STATIONARY
@@ -608,10 +624,10 @@ class ConflictManager:
         for idx, obj in enumerate(blackboard[1]):
             current_state[blackboard[1][idx]].append(idx)
         
-        print(f'current_state{current_state}',file=sys.stderr,flush=True)
+        print(f'Conflict_manager effects {current_state}',file=sys.stderr,flush=True)
         for loc ,v in current_state.items():
             if len(v) > 1:
-                
+
                 '''
                 For collisions we prioritize the agent with the most important job
                 '''
@@ -647,7 +663,11 @@ class ConflictManager:
                 #else:
                     #In open space 
                        
-          
+    def agent_amnesia(self,agent):
+        print(f'AMNESIA, char =  {agent.agent_char}',file=sys.stderr,flush=True)
+        agent._reset_from_help()
+        agent._reset_plan()
+        agent.goal_job_id = None
                 
     def _calculate_plan_coords(self,agent,current_loc):
 
@@ -712,6 +732,7 @@ class ConflictManager:
         helper_agt = None
         box_color = self.world_state.boxes[box_loc][0][0]
         box_loc_id=self.world_state.boxes[box_loc][0][2]
+        box_component =self.world_state.boxes[box_loc][0][3]
         
         # Temp creation to identify if an agents has this box assigned 
         x=[(agt.current_box_id, agt) for agt in agents if agt.current_box_id==box_loc_id]
@@ -724,16 +745,13 @@ class ConflictManager:
             
             # TODO: Overvej om det giver mening helper_agt kan være agenten selv som beder om hjælp 
             #Box was not assigned to  
-        
-            
-
-            for agt in [agt for agt in agents if agt.agent_color==box_color]:
-
+            for agt in [agt for agt in agents if (agt.agent_color==box_color) and (agt.connected_component_id == box_component)]:
+                print(f'-------agtchar : {agt.agent_char}, agt_connected component : {agt.connected_component_id}, box_component {box_component}',file=sys.stderr,flush=True)
                 dist = utils.cityblock_distance(box_loc,blackboard[0][agt.agent_internal_id])
                 
 
                 # only get help from an agent that's not assigned
-                if  (dist < min_dist) and (agt.plan_category!=6):
+                if  (dist < min_dist) and (agt.plan_category!=_cfg.solving_help_task):
                     min_dist = dist
                     helper_agt = agt  
             return helper_agt

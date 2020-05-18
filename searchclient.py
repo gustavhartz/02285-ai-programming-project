@@ -204,14 +204,16 @@ class SearchClient:
         del_agents = [key for key in self.initial_state.agents.keys() if key in all_remove]
 
         for loc in del_agents:
-            self.del_agents_ids.append(self.initial_state.agents[loc][1])
-            del self.initial_state.agents[loc]
+            self.del_agents_ids.append(self.initial_state.agents[loc][0][1])
         
+        
+        '''
         a_inter_id = 0
         for _,agt in self.initial_state.agents.items():
             agt[0][2] = a_inter_id
             a_inter_id+=1
-
+        '''
+        
         #Re-indexing of our box_id's 
         del_boxes = [key for key in self.initial_state.boxes.keys() if key in all_remove]
         

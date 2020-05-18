@@ -12,10 +12,11 @@ max_replanning_depth=5
 
 max_replanning_steps=max_replanning_depth*2
 
-while_counter = 100
+while_counter = 200
 
 no_task=1
 goal_assigner_location=2
 goal_assigner_box=3
 awaiting_help = 4
-solving_help_task = 5
+self_helping = 5
+solving_help_task = 6

@@ -143,8 +143,9 @@ class GoalAssigner(Assigner):
                 
                 # reset agent to be free
                 if element.goal_job_id not in current_execution:
+                    print(f'+++++++ PLAN RESET for :  agent {element.agent_char}',file=sys.stderr,flush=True)
                     element._reset_from_help()
-                elif element.goal_job_id == config.awaiting_help:
+                elif element.plan_category == config.awaiting_help:
                     for _ele in self.agents:
                         # make _ele it's helper
                         if _ele.agent_char == element.helper_id[0]:
@@ -158,7 +159,7 @@ class GoalAssigner(Assigner):
                         pass
                 else:
                     if (element.goal_job_id is not None) and (element.goal_job_id not in solved_tasks):
-                        
+                        print(f'+++++++ WITH BOX for :  agent {element.agent_char}',file=sys.stderr,flush=True)
                         assignments_with_box[element.goal_job_id] = element
                         continue
 
@@ -197,9 +198,11 @@ class GoalAssigner(Assigner):
                     # no assignment for this agent
                     continue
                 assignments[best_element] = element
+                print(f'+++++++ ASSIGNMENT for :  agent {element.agent_char}',file=sys.stderr,flush=True)
         
         # If new box tasks found for agent - create format for delegate and assign
         if len(assignments_with_box)>0:
+            print(f">>>>>>>Goal Assigner, assignment_with_box {assignments_with_box}",file=sys.stderr,flush=True)
             self._delegate_task_with_box(assignments_with_box)
 
         if len(assignments) > 0:

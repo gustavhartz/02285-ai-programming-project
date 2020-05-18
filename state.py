@@ -9,7 +9,7 @@ from utils import _remove_element
 
 
 class State:
-    _RNG = random.Random(1)
+    _RNG = random.Random()
     walls = defaultdict(bool)
 
     def __init__(self, copy: 'State' = None):
@@ -268,59 +268,62 @@ class State:
             temp[value[0][2]] = [value[0][0], key]
         return temp
 
-    def world_state_update(self, actions: list):
-        agentDict = self.reverse_agent_dict_internal()
+    def world_state_update(self, actions: list,deleted_ids):
+        agentDict = self.reverse_agent_dict()
        
         for agentId, action in enumerate(actions):
-            location = [int(x) for x in agentDict[agentId][1].split(",")]
-            agent_row = location[0]
-            agent_col = location[1]
-        
-            if action.action_type is ActionType.Move:
-                #Move agent
-                self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
-                    .append(self.agents[f'{agent_row},{agent_col}'][0])
-                
-                #Remove agent from old location
-                _remove_element(self.agents, f'{agent_row},{agent_col}')
+            if agentId in deleted_ids:
+                continue
+            else:
+                location = [int(x) for x in agentDict[agentId][1].split(",")]
+                agent_row = location[0]
+                agent_col = location[1]
             
-            elif action.action_type is ActionType.Pull:
-                '''
-                Antager her at en box ikke kan flyttes af flere agenter på samme tid
-                '''
-               
-                #Move agent
-                self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
-                    .append(self.agents[f'{agent_row},{agent_col}'][0])
-
-                #Remove agent from old location
-                _remove_element(self.agents, f'{agent_row},{agent_col}')
-
-                #Move Box
-                self.boxes[f'{agent_row},{agent_col}']\
-                    .append(self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0])
-
-                #Remove box from old location
-                _remove_element(self.boxes, f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}')
-
-            elif action.action_type is ActionType.Push:
-                '''
-                Antager her at en box ikke kan flyttes af flere agenter på samme tid
-                '''
+                if action.action_type is ActionType.Move:
+                    #Move agent
+                    self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                        .append(self.agents[f'{agent_row},{agent_col}'][0])
+                    
+                    #Remove agent from old location
+                    _remove_element(self.agents, f'{agent_row},{agent_col}')
                 
-                #Move Box
-                self.boxes[f'{agent_row+action.agent_dir.d_row+action.box_dir.d_row},{agent_col+action.agent_dir.d_col+action.box_dir.d_col}']\
-                    .append(self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0])
+                elif action.action_type is ActionType.Pull:
+                    '''
+                    Antager her at en box ikke kan flyttes af flere agenter på samme tid
+                    '''
                 
-                #Remove Box
-                _remove_element(self.boxes, f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')
+                    #Move agent
+                    self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                        .append(self.agents[f'{agent_row},{agent_col}'][0])
 
-                #Move agent
-                self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
-                    .append(self.agents[f'{agent_row},{agent_col}'][0])
-                
-                #Remove agent from old location
-                _remove_element(self.agents, f'{agent_row},{agent_col}')
+                    #Remove agent from old location
+                    _remove_element(self.agents, f'{agent_row},{agent_col}')
+
+                    #Move Box
+                    self.boxes[f'{agent_row},{agent_col}']\
+                        .append(self.boxes[f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}'][0])
+
+                    #Remove box from old location
+                    _remove_element(self.boxes, f'{agent_row+action.box_dir.d_row},{agent_col+action.box_dir.d_col}')
+
+                elif action.action_type is ActionType.Push:
+                    '''
+                    Antager her at en box ikke kan flyttes af flere agenter på samme tid
+                    '''
+                    
+                    #Move Box
+                    self.boxes[f'{agent_row+action.agent_dir.d_row+action.box_dir.d_row},{agent_col+action.agent_dir.d_col+action.box_dir.d_col}']\
+                        .append(self.boxes[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'][0])
+                    
+                    #Remove Box
+                    _remove_element(self.boxes, f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')
+
+                    #Move agent
+                    self.agents[f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}']\
+                        .append(self.agents[f'{agent_row},{agent_col}'][0])
+                    
+                    #Remove agent from old location
+                    _remove_element(self.agents, f'{agent_row},{agent_col}')
 
     # SØG PÅ DENNE MÅDE if key in dict
     def world_is_goal_state(self):

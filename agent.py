@@ -41,10 +41,18 @@ class search_agent(Agent):
         self.plan_category = -1
         self.pending_help = False
         self.pending_task_bool = False
+        self.pending_task_dict = {}
+        self.pending_task_func = None
         self.helper_agt_requester_id = None
         # tuple(helper_agt.agent_char, helper_agt.agent_internal_id)
         self.helper_id = None
         self.pending_help_pending_plan = None
+
+
+        #Self-help pipeline
+        self.self_pending_task_funcs = []
+        self.self_pending_task_dict = {}
+
 
         # Used to track which jobs are currently assinged in goalassigner - 'goal_location'
         self.goal_job_id = None
@@ -115,7 +123,8 @@ class search_agent(Agent):
     def search_with_box(self, world_state: 'State'):
 
         # Get current location of box trying to move
-        box_from = _get_box_loc(self.world_state, self.current_box_id)
+        box_from = _get_box_loc(world_state, self.current_box_id)
+        print(f'Search with box: box_from: {box_from}, box_id = {self.current_box_id}')
 
         if world_state.boxes[box_from][0][0] != self.agent_color:
             raise Exception("Agent cannot move this box")
@@ -422,6 +431,9 @@ class search_agent(Agent):
         self.helper_agt_requester_id = None
         self.helper_id = None
         self.pending_help_pending_plan = None
+        #
+        self.pending_task_dict = {}
+        self.pending_task_func = None
     
     def _resume_plan(self):
         if self.current_box_id is not None:
