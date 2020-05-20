@@ -47,9 +47,7 @@ def h_goalassigner_pos(self: 'Heuristic', state: 'State', dist_function) -> 'int
 
 def h_goalassigner_to_box(self: 'Heuristic', state: 'State', dist_function) -> 'int':
     # CALCULATE THE VALUES FROM LOCAL VARIABLE IN STATE coordinate_agent: str, coordinate_box: str, goal_agent: str, goal_box: str
-    if 4 in state.reverse_agent_dict():
-        print(f"Search State{state}", file=sys.stderr, flush=True)
-        print(f"Search State{dist_function(agent_location, self.data['box_loc'])}", file=sys.stderr, flush=True)
+   
 
     if 'box_loc' not in self.data and 'agent_char' not in self.data:
         raise Exception('Using wrong heuristic. **kwargs must contain box_loc')

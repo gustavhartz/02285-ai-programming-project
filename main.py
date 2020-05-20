@@ -11,7 +11,8 @@ from goalassignment import *
 from state import State
 from copy import deepcopy as cp
 from preprocessing import create_dijkstras_map
-
+from action import MOVE_ACTIONS
+from random import shuffle
 
 def main():
 
@@ -103,6 +104,11 @@ def main():
     conflict_manager.blackboard_conflictSolver(list_agents)
 
     
+    #Agent randomness execution variables
+    agent_prev_category = [-1]*len(list_agents_full)
+    agent_noop_counter = [0]*len(list_agents_full)
+    include_categories = [config.goal_assigner_box,config.goal_assigner_location,config.self_helping]
+    
 
     # Whileloop
     counter = 0
@@ -160,16 +166,24 @@ def main():
                 ConflictManager.agent_amnesia(x)
         '''
 
-        # Give task to unassigned agents
-        goal_assigner.reassign_tasks()
-        
-        # Solve the new colflicts
+         # Solve the new colflicts
         for e in list_agents:
             if len(e.plan) > 0:
                 # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
                 print(f'{e.plan[0]} {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
             else:
                 print(f'NoPlan for {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+
+        # Give task to unassigned agents
+        goal_assigner.reassign_tasks()
+        
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'>>{e.plan[0]} {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+            else:
+                print(f'>>NoPlan for {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+       
 
 
         print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
@@ -209,7 +223,64 @@ def main():
 
         # pop latest action from the full sorted list of actions
         # This functions gives a noop if it does not have a plan
-        list_of_actions= [x.get_next_action() for x in list_agents_full]
+        list_of_actions = [x.get_next_action() for x in list_agents_full]
+
+        
+        if config.initiate_random_agents:
+            #Increase counters if agent have been stalling  
+            for idx, act in enumerate(list_of_actions):
+                if act.action_type == ActionType.NoOp: 
+                    if (list_agents_full[idx].plan_category in include_categories) and (list_agents_full[idx].plan_category == agent_prev_category[idx]):
+                        agent_noop_counter[idx]+=1
+                else:
+                    agent_noop_counter[idx] = 0
+
+
+            if max(agent_noop_counter)>config.agent_max_stall:
+                #Create possible future state only if any value is actually above threshold
+                temp_state = State(current_state)
+                temp_state.world_state_update(list_of_actions,client.del_agents_ids)
+                agentDict = current_state.reverse_agent_dict()
+                
+                #list of temp coordinates that are blocked along the way 
+                temp_blocked = []
+
+                #Fix random actions
+                for idx, num in enumerate(agent_noop_counter):
+                    
+                    if num > config.agent_max_stall:
+                        #If agent have been stalling too long, push random action
+                        applicable_action = None
+                        found_action = False
+
+                        shuffle(MOVE_ACTIONS)
+                        
+                        for action in MOVE_ACTIONS:
+                            #get location
+                            agt_row, agt_col = [int(x) for x in agentDict[idx][1].split(',')]
+
+                            new_agt_row = agt_row + action.agent_dir.d_row
+                            new_agt_col = agt_col + action.agent_dir.d_col
+
+                            loc_string = f'{new_agt_row},{new_agt_col}'
+
+                            if current_state.random_is_free(loc_string) \
+                                and temp_state.random_is_free(loc_string) \
+                                    and (loc_string not in temp_blocked):
+                                applicable_action = action
+                                found_action = True
+                                
+                                break
+                        if found_action:
+                            #Ask agent to forget everything, but and then push the applicable action
+                            agent_noop_counter[idx] = 0
+                            list_agents_full[idx].agent_amnesia()
+                            
+                            list_of_actions[idx] = applicable_action
+
+                            #"Apply" action
+                            temp_blocked.append(loc_string)
+
 
         # push to server -> list of actions
         my_string = ';'.join(list(str(x) for x in list_of_actions))
@@ -236,6 +307,13 @@ def main():
         # Update the states of goalassigner and conflictmanager
         conflict_manager.world_state = State(current_state)
         GoalAssigner.world_state = State(current_state)
+
+        #Randomizer updating - keeping track in next iteration of the type of category 
+        for ct, agt in enumerate(list_agents_full):
+            agent_prev_category[ct] = agt.plan_category
+
+
+
 
         print("\n", file=sys.stderr, flush=True)
         counter += 1

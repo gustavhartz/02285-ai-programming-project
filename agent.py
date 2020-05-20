@@ -488,6 +488,7 @@ class search_agent(Agent):
         self.helper_agt_requester_id = None
         self.helper_id = None
         self.pending_help_pending_plan = None
+        self.goal_job_id = None
         #
         self.pending_task_dict = {}
         self.pending_task_func = None
@@ -509,6 +510,12 @@ class search_agent(Agent):
             return Action(ActionType.NoOp, None, None)
         else:
             return self.plan.popleft()
+
+    def agent_amnesia(self):
+        
+        self._reset_from_help()
+        self._reset_plan()
+        self.goal_job_id = None
 
 
     def __eq__(self, other):

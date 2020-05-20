@@ -293,13 +293,20 @@ class SearchClient:
             if not_in:
                 dependencies_wrong_order.append([loc])
 
+        print(f'Dependencies wrong order: {dependencies_wrong_order}',file=sys.stderr,flush=True)
+
 
         #Reverse the order and point to a dictionary, so a dependency that were [1,2,3] (1->2->3) becomes
         #{3: [2,1], 2: [1], 1: []}
         for element in dependencies_wrong_order:
             for i in reversed(range(len(element))):
-                self.goal_dependencies[element[i]]=[element[j] for j in reversed(range(i))]
+                if element[i] in self.goal_dependencies:
+                    for x in [element[j] for j in reversed(range(i))]:
+                        self.goal_dependencies[element[i]].append(x)
+                else:    
+                    self.goal_dependencies[element[i]]=[element[j] for j in reversed(range(i))]
 
+        print(f'Goal dependencies {self.goal_dependencies}',file=sys.stderr,flush=True)
 
         #Reverse lists of wells and tunnels (including the mouths)
 
@@ -367,6 +374,10 @@ class SearchClient:
                         self.makeWell(graph,con,cost+1,goal_priority_list,well_id)
                 elif (con not in self.initial_state.tunnels) and (con not in self.initial_state.wells):
                     self.initial_state.mouths[con].append(well_id)
+
+                    if con in self.initial_state.goal_positions:
+                        goal_priority_list.append(con)
+
                     
             
 

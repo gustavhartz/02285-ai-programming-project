@@ -156,6 +156,9 @@ class State:
             # TODO: Solve the problem of moving into agent locations where the agent is "done"
             return (new_position not in self.walls) and (new_position not in self.boxes)
 
+    def random_is_free(self,new_position: str):
+        return (new_position not in self.agents) and (new_position not in self.boxes) and (new_position not in self.walls)
+
     def _update_agent_location(self,old_location: str, new_location: str):
         x = self.agents[old_location]
         self.agents.pop(old_location)
