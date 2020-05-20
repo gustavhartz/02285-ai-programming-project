@@ -125,8 +125,8 @@ class SearchClient:
         print()
         preprocessing.convert_unassigned_colors_to_walls(self.initial_state)
         self.levelDesigner()
+        preprocessing.convert_unassigned_colors_to_walls_connected_comp(self.initial_state)
         
-
         print(f'Done with loading data', file=sys.stderr, flush=True)
 
         # except Exception as ex:

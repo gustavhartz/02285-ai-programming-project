@@ -16,7 +16,11 @@ max_replanning_steps=max_replanning_depth*2
 
 while_counter = 400
 
-seed = 4
+#FOR OUR OWN LEVEL, seed = 88
+seed = 88
+
+
+
 
 no_task=1
 goal_assigner_location=2

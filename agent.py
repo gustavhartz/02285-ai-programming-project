@@ -53,6 +53,9 @@ class search_agent(Agent):
         self.self_pending_task_funcs = []
         self.self_pending_task_dict = {}
 
+        # Nested help variable
+        self.nested_help = False
+
 
         # Used to track which jobs are currently assinged in goalassigner - 'goal_location'
         self.goal_job_id = None
@@ -68,8 +71,7 @@ class search_agent(Agent):
             raise Exception("No values for agent ")
 
         self.world_state = State(world_state)
-        print('Starting search with strategy {}.'.format(self.strategy), file=sys.stderr, flush=True)
-
+        
         if self.strategy == StrategyBestFirst:
             strategy = self.strategy(heuristic.AStar(self.world_state, heuristic_func.h_goalassigner_to_box,
                                                          agent_char=self.agent_char,

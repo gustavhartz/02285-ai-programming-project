@@ -53,7 +53,7 @@ def convert_unassigned_colors_to_walls(world_state:'State'):
 
     colors=set()
     for col in all_cols:
-        print(f'col {col}',file=sys.stderr,flush=True)
+        
         col_agt = False
         for k,v in world_state.agents.items():
             
@@ -77,4 +77,21 @@ def convert_unassigned_colors_to_walls(world_state:'State'):
         # Remove the boxes that cannot be moved
         world_state.boxes.pop(to_be_popped.pop())
 
+def convert_unassigned_colors_to_walls_connected_comp(world_state:'State'):
 
+    connected_comp_boxes = defaultdict(set)
+
+    for agt, v in world_state.agents.items():
+        connected_comp_boxes[v[0][3]].add(v[0][0])
+    
+    _to_be_popped=[]
+    for box_key, v in world_state.boxes.items():
+        if v[0][0] not in connected_comp_boxes[v[0][3]]:
+            _to_be_popped.append(box_key)
+
+    while len(_to_be_popped)>0:
+        _pop = _to_be_popped.pop()
+        world_state.walls[_pop] = True
+        
+        # the blackboard works in a way where we are dependent on the internal goal id
+        # world_state.boxes.pop(_pop)

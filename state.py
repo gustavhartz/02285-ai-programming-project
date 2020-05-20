@@ -46,7 +46,7 @@ class State:
             # this default_dict takes as input the char of the box and returns a list of coordinates for that type of box goal locations
             self.boxes_goal = defaultdict(list)
 
-            # this defaultdict takes as input a string of coordinates and returns a list of size 3 with color,char, id of the box
+            # this defaultdict takes as input a string of coordinates and returns a list of size 4 with color,char, id of the box, connected_comp
             self.boxes = defaultdict(list)
 
             # this default_dict takes as input a string of coordinates and returns a char corresponding to what element is

@@ -136,47 +136,6 @@ def main():
             break
 
         
-
-        '''
-        # All agents helping
-        _helper_agents = {x.helper_agt_requester_id: x for x in list_agents if x.goal_job_id==config.solving_help_task}
-
-        # issue noops if agent is still recieving help
-
-        
-        #All agents reciving help
-        _agents_reciving_help = [x for x in list_agents if (x.plan_category == config.awaiting_help) and (x.pending_help_pending_plan)]
-
-        # If in helping state noop untill tasks solved
-        for x in _agents_reciving_help:
-            _awaiting_done=True
-            for y in list_agents:
-                if (y.goal_job_id==config.solving_help_task) and (y.helper_agt_requester_id == x.agent_char) and ((len(_helper_agents[y].plan) > 0) or y.pending_task_bool):
-                    x.plan.appendleft(Action(ActionType.NoOp, None, None))
-                    _awaiting_done=False
-                    break
-            if _awaiting_done:
-                print('enter', file=sys.stderr,flush=True)
-                x._resume_plan()
-        '''
-
-        # Give task to unassigned agents
-        goal_assigner.reassign_tasks()
-        
-        # Solve the new colflicts
-        for e in list_agents:
-            if len(e.plan) > 0:
-                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-                print(f'{e.plan[0]} {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
-            else:
-                print(f'NoPlan for {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
-
-
-        print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
-
-        conflict_manager.blackboard_conflictSolver(list_agents)
-        print(f'############## post BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
-
         ''' Deprecated
         # All agents helping
         
@@ -201,6 +160,40 @@ def main():
                 ConflictManager.agent_amnesia(x)
         '''
 
+        # Give task to unassigned agents
+        goal_assigner.reassign_tasks()
+        
+        # Solve the new colflicts
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'{e.plan[0]} {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+            else:
+                print(f'NoPlan for {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+
+
+        print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
+
+        conflict_manager.blackboard_conflictSolver(list_agents)
+        print(f'############## post BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
+
+        print(f'!-!-!-! {[(x.agent_char,x.helper_agt_requester_id, x.helper_id) for x in list_agents]}',file=sys.stderr,flush=True)
+
+
+        # Improve speed - find the agetns that are currently executing help tasks
+        _helper_agents_ = [y for y in list_agents if y.helper_agt_requester_id is not None]
+
+        # Helper agents awaiting help
+        # TODO: Check up on nested help correctness 
+        for x in list_agents:
+            _awaiting_done=True
+            if x.plan_category==config.solving_help_task and x.nested_help:
+                for y in _helper_agents_:
+                    if x.helper_id[0]==y.helper_agt_requester_id and x.agent_char!=y.agent_char:
+                        x.plan.appendleft(Action(ActionType.NoOp, None, None))
+                        _awaiting_done=False
+                if _awaiting_done:
+                    x.nested_help=False
 
         for e in list_agents:
             if len(e.plan) > 0:

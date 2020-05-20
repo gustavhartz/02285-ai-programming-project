@@ -149,7 +149,7 @@ class ConflictManager:
                 box_id = idx - len_agents
                 _agt_list = [agt for agt in agents if agt.current_box_id == box_id]
                 if len(_agt_list)>0:
-                    print(f'idx: {idx}, _agt_list{_agt_list[0].agent_char}',file=sys.stderr,flush=True)
+                    
                     agt = _agt_list[0]
                 else:
                     continue
@@ -161,7 +161,7 @@ class ConflictManager:
                 if p_idx != idx:
                     prereq_state[p_loc].append(p_idx)
 
-            print(f'idx: {idx}',file=sys.stderr,flush=True)
+            
             for _,v in prereq_state.items():
                 #If multiple indexes hash to same value, then we have a conflict
                 if len(v) > 1:
@@ -178,7 +178,7 @@ class ConflictManager:
                         for v_check in v:
                             if v_check-len_agents == agt.current_box_id:
                             #if v_check == agt.current_box_id-len_agents:    
-                                print(f'skipping in idx {idx},vcheck {v_check}',file=sys.stderr,flush=True)
+                                
                                 skip = True
                     
 
@@ -217,13 +217,23 @@ class ConflictManager:
                                         agt.search_conflict_bfs_not_in_list(self.world_state,v_id,agents[v_id].current_box_id,agt.current_box_id, \
                                             self._calculate_plan_coords(agents[v_id],blackboard[0][v_id]), move_action_allowed = False)
 
+                                        
+                                        if agt.plan_category == _cfg.solving_help_task:
+                                            agt.nested_help = True
+                                        else:   
+                                            agt.plan_category = _cfg.awaiting_help
+                                            agt.pending_help = True
+
+                                        
                                         agents[v_id].plan_category=_cfg.solving_help_task
-                                        agt.plan_category= _cfg.awaiting_help
+                                        agents[v_id].helper_agt_requester_id = agt.agent_char
                                         agt.helper_id = (agents[v_id].agent_char, agents[v_id].agent_internal_id)
+                                        
+
                                         
                                         #***
                                         agt.plan.appendleft(Action(ActionType.NoOp, None, None))
-
+                                    
 
                                     else:
                                         #idx hits a box, ask for help to move this box:
@@ -242,7 +252,6 @@ class ConflictManager:
                                             helper_agt._reset_plan()
                                             #Search to location where our current agent/box is located
                                             helper_agt.search_to_box(self.world_state, blackboard[0][v_id],v_id-len_agents)
-                                            helper_agt.plan
                                             
                                             #PUSH to agent: Search out of well with the box 
                                             helper_agt.goal_job_id = None
@@ -258,13 +267,20 @@ class ConflictManager:
                                                                             }
                                             #***
                                             helper_agt.plan.appendleft(Action(ActionType.NoOp, None, None))
-                                            print(f'************Well, box_id : {self.world_state.boxes[blackboard[0][v_id]][0][2]}',file=sys.stderr,flush=True)
+                                            
                                             if helper_agt.agent_char != agt.agent_char:
 
                                                 #Current agent now has to plan how to get out from well
-                                                agt.pending_help = True
+                                                
                                                 agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
-                                                agt.plan_category = _cfg.awaiting_help 
+
+                                                if agt.plan_category == _cfg.solving_help_task:
+                                                    agt.nested_help = True
+                                                else:   
+                                                    agt.plan_category = _cfg.awaiting_help
+                                                    #TODO: inkluder pending_help i if eller ikke?
+                                                    agt.pending_help = True
+        
                                                 
                                                 
                                                 if box_id is not None:
@@ -322,16 +338,24 @@ class ConflictManager:
                                             agt.search_conflict_bfs_not_in_list(self.world_state,v_id,agents[v_id].current_box_id,agt.current_box_id, \
                                                 self._calculate_plan_coords(agents[v_id],blackboard[0][v_id]), move_action_allowed = False)
 
+                                            if agt.plan_category == _cfg.solving_help_task:
+                                                agt.nested_help = True
+                                            else:   
+                                                agt.plan_category = _cfg.awaiting_help
+                                                agt.pending_help = True
+                                            
                                             #***
                                             agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+                                            
                                             agents[v_id].plan_category=_cfg.solving_help_task
-                                            agt.plan_category= _cfg.awaiting_help
+                                            agents[v_id].helper_agt_requester_id = agt.agent_char
                                             agt.helper_id = (agents[v_id].agent_char, agents[v_id].agent_internal_id)
 
                                     else:
                                         #idx hits a box, ask for help to move this box:
                                         helper_agt = self._determine_helper_agent(blackboard[0][v_id],blackboard,agents)
                                         
+
                                         #If no agent was found, just wait until someone becomes available
                                         if helper_agt is None:
                                             self.agent_amnesia(agt)
@@ -371,9 +395,15 @@ class ConflictManager:
 
                                             #Current agent now has to plan how to get out from well
                                             if helper_agt.agent_char != agt.agent_char:
-                                                agt.pending_help = True
+
+                                                if agt.plan_category == _cfg.solving_help_task:
+                                                    agt.nested_help = True
+                                                else:   
+                                                    agt.plan_category = _cfg.awaiting_help
+                                                    agt.pending_help = True
+
                                                 agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
-                                                agt.plan_category = _cfg.awaiting_help   
+                                                
                                                 if box_id is not None:
                                                     agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
                                                             agent_collision_internal_id = None, \
@@ -415,7 +445,7 @@ class ConflictManager:
 
 
                                     able_to_move = self.replanner.replan_v1(self.world_state,agt ,box_id, blocked)
-                                    print(f'stationary open space,  able to move {able_to_move}',file=sys.stderr,flush=True)
+                                    
                                     
                                     # TODO: Change states and categories to the appropiate values
                                     if not able_to_move:
@@ -448,6 +478,7 @@ class ConflictManager:
                                             #If no agent was found, just wait until someone becomes available
                                             if helper_agt is None:
                                                 self.agent_amnesia(agt)
+                                                
 
                                                 #TODO: not final
                                                 #agt.plan.appendleft(Action(ActionType.NoOp, None, None))
@@ -484,12 +515,19 @@ class ConflictManager:
 
                                                 #Current agent now gets NoOps in main until helping task is solved
                                                 if helper_agt.agent_char != agt.agent_char:
+                                                    
+                                                    
+                                                    #agt.pending_help_pending_plan = True
+                                                    if agt.plan_category == _cfg.solving_help_task:
+                                                        agt.nested_help = True
+                                                    else:   
+                                                        agt.plan_category = _cfg.awaiting_help
+                                                        agt.pending_help = True
+
+                                                    agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
                                                     #***
                                                     agt.plan.appendleft(Action(ActionType.NoOp, None, None))
-                                                    #agt.pending_help_pending_plan = True
-                                                    agt.pending_help = True
-                                                    agt.helper_id = (helper_agt.agent_char, helper_agt.agent_internal_id)
-                                                    agt.plan_category = _cfg.awaiting_help   
+                                                    
                                     else:
                                         agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                                                                    
@@ -507,7 +545,7 @@ class ConflictManager:
                                         #Two agents - find out who has the highest priority 
                                         if agt.plan_category >= agents[v_id].plan_category:
 
-                                            print(f'HHH idx agt most important {idx} , agents[v_id] {agents[v_id].agent_internal_id}',file=sys.stderr,flush=True)
+                                            
                                             
                                             if idx < len_agents:
                                                 if agents[idx].current_box_id is not None:
@@ -526,7 +564,7 @@ class ConflictManager:
 
 
                                             able_to_move = self.replanner.replan_v1(self.world_state,agents[v_id],None,blocked)
-                                            print(f'HHH able to move?  {able_to_move},',file=sys.stderr,flush=True)
+                                           
                                             if not able_to_move:
                                                 bool_val = agents[v_id].search_conflict_bfs_not_in_list(world_state = self.world_state, \
                                                         agent_collision_internal_id = agt.agent_internal_id, \
@@ -708,7 +746,7 @@ class ConflictManager:
                                 else:
                                     #Wait for prereq location to be free
                                     agt.plan.appendleft(Action(ActionType.NoOp, None, None))
-        print(f'++++++ Done wiht iter for idx:',file=sys.stderr,flush=True)                   
+        
         #Update blackboard after new actions are pushed that fixes prereqs
         blackboard = self.create_blackboard(agents)
 
@@ -718,11 +756,11 @@ class ConflictManager:
         for idx, obj in enumerate(blackboard[1]):
             current_state[blackboard[1][idx]].append(idx)
         
-        print(f'Conflict_manager effects {current_state}',file=sys.stderr,flush=True)
+        
         for loc ,v in current_state.items():
             if len(v) > 1:
 
-                print(f'<><>v {v}',file=sys.stderr,flush=True)
+                
                 '''
                 For collisions we prioritize the agent with the most important job
                 '''
@@ -739,7 +777,7 @@ class ConflictManager:
                         else:
                             continue
                         agt_list.append(box_agt)
-                print(f'<><>agt_list {[x.agent_char for x in agt_list]}',file=sys.stderr,flush=True)
+                
 
                 prez = -1
                 prez_category = -10
@@ -748,7 +786,7 @@ class ConflictManager:
                         prez_category = ag.plan_category
                         prez = p_id
 
-                print(f'prez: {prez}, category {prez_category}',file=sys.stderr,flush=True)
+                
 
                 for idc, ag in enumerate(agt_list):
                     if idc != prez:
@@ -761,7 +799,7 @@ class ConflictManager:
                     #In open space 
                        
     def agent_amnesia(self,agent):
-        print(f'AMNESIA, char =  {agent.agent_char}',file=sys.stderr,flush=True)
+        
         agent._reset_from_help()
         agent._reset_plan()
         agent.goal_job_id = None
@@ -818,12 +856,14 @@ class ConflictManager:
                 coordinate_list.append(f'{new_box_row},{new_box_col}')
             #Update agent current location
             row,col = new_agt_row,new_agt_col
-        print(f'coordlist: {set(coordinate_list)}',file=sys.stderr,flush=True)
+        
         return(set(coordinate_list))
 
 
 
     def _determine_helper_agent(self,box_loc,blackboard,agents):
+
+
 
         min_dist = inf
         helper_agt = None
@@ -834,7 +874,7 @@ class ConflictManager:
         # Temp creation to identify if an agents has this box assigned 
         x=[(agt.current_box_id, agt) for agt in agents if agt.current_box_id==box_loc_id]
 
-        print(f':::::box_lox_id = {box_loc_id}, x = {x}',file=sys.stderr,flush=True)
+        
         
         # Case where box is assigned
         if len(x)>0:
@@ -847,7 +887,7 @@ class ConflictManager:
             # TODO: Overvej om det giver mening helper_agt kan være agenten selv som beder om hjælp 
             #Box was not assigned to  
             for agt in [agt for agt in agents if (agt.agent_color==box_color) and (agt.connected_component_id == box_component)]:
-                print(f'-------agtchar : {agt.agent_char}, agt_connected component : {agt.connected_component_id}, box_component {box_component}',file=sys.stderr,flush=True)
+             
                 dist = utils.cityblock_distance(box_loc,blackboard[0][agt.agent_internal_id])
                 
 
@@ -857,7 +897,7 @@ class ConflictManager:
                     helper_agt = agt  
             if helper_agt is not None:
                 helper_agt.current_box_id = box_loc_id
-                print(f'XXXXXXXXXXXX Helper_agt_id box {helper_agt.current_box_id}',file=sys.stderr,flush=True)
+                
             return helper_agt
 
-
+   
