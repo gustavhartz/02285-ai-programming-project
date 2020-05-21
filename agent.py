@@ -98,7 +98,6 @@ class search_agent(Agent):
         while True:
             if iterations == 1000:
                 print(strategy.search_status(), file=sys.stderr, flush=True)
-                print([x[0] for x in strategy.frontier], file=sys.stderr, flush=True)
                 iterations = 0
 
             if memory.get_usage() > memory.max_usage:
@@ -106,13 +105,11 @@ class search_agent(Agent):
                 return None
 
             if strategy.frontier_empty():
-                print(f'{self.agent_char}', file=sys.stderr, flush=True)
-                print('Empty frontier SearchToBox', file=sys.stderr, flush=True)
+
                 return False
 
             leaf = strategy.get_and_remove_leaf()
-            print(f"f for latest popped:{strategy.heuristic.f(leaf)}\n popped state={leaf}\n",file=sys.stderr, flush=True)
-            print(f"ite:{iterations}",file=sys.stderr, flush=True)
+
 
 
 
@@ -132,8 +129,7 @@ class search_agent(Agent):
                 #         strategy.add_to_frontier(child_state)
 
             iterations += 1
-            print(strategy.frontier, file=sys.stderr, flush=True)
-            print(f"\n \n",file=sys.stderr, flush=True)
+
 
     def search_with_box(self, world_state: 'State',boxes_visible:list):
 

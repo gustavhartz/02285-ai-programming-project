@@ -10,6 +10,7 @@ from replanner import Replanner
 import agent
 import utils
 import config as _cfg
+from copy import deepcopy as dp
 
 from math import inf
 
@@ -308,8 +309,11 @@ class ConflictManager:
                                                 agt.plan.append(Action(ActionType.NoOp, None, None))
                                             '''    
 
+
                                 #Check TUNNEL
                                 elif f'{row_0_v_id},{col_0_v_id}' in self.world_state.tunnels:
+                                    # Tunnel
+
                                     #TODO: Nu er dette det samme som sker i en brønd. Overvej om der er bedre måder at udnytte vores preprocessing på
                                     if v_id < len_agents:
                                         #Stationary oject is an agent.
@@ -365,11 +369,21 @@ class ConflictManager:
                                         else:
                                             #One agent has been found as helper.
 
+                                            # We need to save this before resetting as we can help ourself
+                                            '''
+                                            Not quite sure this is the right way to do it but we make a deep copy so we
+                                            we can keep the coordinate
+                                            '''
+                                            _coords_plan_of_requester = self._calculate_plan_coords(agt, blackboard[0][agt.agent_internal_id])
+
                                             #Helper agent now computes route to box, and then how to get the box out of the well
                                             helper_agt.plan_category = _cfg.solving_help_task
                                             helper_agt._reset_plan()
                                             #Search to location where our current agent/box is located
                                             helper_agt.search_to_box(self.world_state, blackboard[0][v_id],v_id-len_agents)
+                                            if agt.agent_char==1:
+                                                print(f"ENTER: {agt.agent_char}",file=sys.stderr,flush=True)
+                                                print(f"plan: {_coords_plan_of_requester}",file=sys.stderr,flush=True)
 
                                             #***
                                             helper_agt.plan.appendleft(Action(ActionType.NoOp, None, None))
@@ -421,11 +435,13 @@ class ConflictManager:
                                                                         coordinates = self.world_state.tunnels_reverse[self.world_state.tunnels[blackboard[0][v_id]]])
                                                 #***
                                                 agt.plan.appendleft(Action(ActionType.NoOp, None, None))
-                                    
+                                            else:
+                                                helper_agt.pending_task_dict['coordinates'] = _coords_plan_of_requester
+
 
                                 #If in open space
                                 else:
-                                    #Try to move around. If no plan around object was found in X steps, we ask for the object to be moved. 
+                                    #Try to move around. If no plan around object was found in X steps, we ask for the object to be moved.
                                     #TODO: Vær sikker på at det virker så vi både kan sende en agent med og uden en boks
 
                                     #Find out if v-id os box or agent, and if collision agent has a box

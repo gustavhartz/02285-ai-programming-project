@@ -28,22 +28,22 @@ class SearchClient:
 
         # Get meta data
         while True:
-
-            if line == "#domain\n":
+            if line == "#domain\n" or line == "#domain\r\n":
                 line = server_messages.readline()
                 self.initial_state.domain = line
 
-            elif line == "#levelname\n":
+            elif line == "#levelname\r\n" or line == "#levelname\n":
                 line = server_messages.readline()
                 self.initial_state.levelname = line
 
-            elif line == "#colors\n":
+            elif line == "#colors\r\n" or line == "#colors\n":
+
                 # self.initial_state.colors = {}
                 # self.initial_state.colors = defaultdict(list)
                 line = server_messages.readline()
                 while "#" not in [c for c in line]:
                     current_color = line.split(':')[0]
-                    for x in line.split(':')[1].replace(' ','').strip('\n').split(','):
+                    for x in line.split(':')[1].replace(' ','').strip('\n').strip('\r').split(','):
                         self.initial_state.colors[x] = current_color
                         if not self.initial_state.colors_reverse[current_color]:
                             self.initial_state.colors_reverse[current_color] = [x]
@@ -55,16 +55,22 @@ class SearchClient:
                 break
             line = server_messages.readline()
 
+        if (line == "#initial\r\n") or line == ("#initial\n"):
+            print("found", file=sys.stderr, flush=True)
+            pass
+        else:
+            line = server_messages.readline()
 
+        print([x for x in line], file=sys.stderr, flush=True)
 
         # Loading in the level
-        if line != "#initial\n":
+        if not ((line == "#initial\n") or (line == "#initial\r\n")):
             raise Exception("Problem in parsing")
         line = server_messages.readline()
         row = 0
         box_id = 0
         connected_component_num = -1
-        while line != "#goal\n":
+        while not (line == "#goal\r\n" or line == "#goal\n"):
             self.max_row +=1
             for col, char in enumerate(line):
                 if char != '\n':
@@ -85,6 +91,9 @@ class SearchClient:
                 elif char == '\n':
                     # End of line
                     break
+                elif char == '\r':
+                    # stupid char
+                    pass
                 else:
                     print(f'Error, read invalid level character: {char,line} at {row,col}', file=sys.stderr, flush=True)
                     sys.exit(1)
@@ -94,7 +103,7 @@ class SearchClient:
 
         # Getting the goal setting
         row = 0
-        while line != "#end\n":
+        while not (line == "#end\r\n" or line == "#end\n"):
             line = server_messages.readline()
             for col, char in enumerate(line):
                 if char == '+':
@@ -114,21 +123,22 @@ class SearchClient:
                 elif char == '\n':
                     # End of line
                     break
-                elif line == "#end\n":
+                elif line == "#end\r\n" or line == "#end\n":
                     break
+                elif char == '\r':
+                    # stupid char
+                    pass
 
                 else:
                     print(f'Error, read invalid level character: {char, line} at {row, col}', file=sys.stderr,
                           flush=True)
                     sys.exit(1)
             row += 1
-        print()
         preprocessing.convert_unassigned_colors_to_walls(self.initial_state)
         self.levelDesigner()
         preprocessing.convert_unassigned_colors_to_walls_connected_comp(self.initial_state)
         
         print(f'Done with loading data', file=sys.stderr, flush=True)
-
         # except Exception as ex:
         #     print('Error parsing level: {}.'.format(repr(ex.with_traceback())), file=sys.stderr, flush=True)
         #     sys.exit(1)

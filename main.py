@@ -201,6 +201,11 @@ def main():
             _awaiting_done=True
             if x.plan_category==config.solving_help_task and x.nested_help:
                 for y in _helper_agents_:
+
+                    # Very beta and fucked - should not happen
+                    if x.helper_id is None:
+                        x.agent_amnesia()
+                        break
                     if x.helper_id[0]==y.helper_agt_requester_id and x.agent_char!=y.agent_char:
                         x.plan.appendleft(Action(ActionType.NoOp, None, None))
                         _awaiting_done=False
@@ -286,9 +291,12 @@ def main():
                         elif found_action and list_agents_full[idx].plan_category == config.solving_help_task:
                             agent_noop_counter[idx] = 0
                             if list_agents_full[idx].helper_agt_requester_id is not None:
-                                list_agents_full[list_agents_full[idx].helper_agt_requester_id].agent_amnesia()
-                                agent_noop_counter[list_agents_full[idx].helper_agt_requester_id] = 0
-                                list_agents_full[idx].agent_amnesia()
+                                if list_agents_full[idx].helper_agt_requester_id == idx:
+                                    list_agents_full[list_agents_full[idx].helper_agt_requester_id].agent_amnesia()
+                                else:
+                                    list_agents_full[list_agents_full[idx].helper_agt_requester_id].agent_amnesia()
+                                    agent_noop_counter[list_agents_full[idx].helper_agt_requester_id] = 0
+                                    list_agents_full[idx].agent_amnesia()
 
                             list_of_actions[idx] = applicable_action
 
