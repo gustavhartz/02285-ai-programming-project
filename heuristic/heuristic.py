@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import math
 import utils
+import sys
 
 
 class Heuristic(metaclass=ABCMeta):
@@ -21,20 +22,21 @@ class Heuristic(metaclass=ABCMeta):
     def f(self, state: 'State'):
         raise NotImplementedError
 
-    # add g value to make this the correct value
-    def h(self, state: 'State') -> 'int':
-        return self.heuristic_function(self, state, self.dist_function) + state.g
+    # # add g value to make this the correct value
+    # def h(self, state: 'State') -> 'int':
+    #     return self.heuristic_function(self, state, self.dist_function)
 
 
 class AStar(Heuristic):
     def __init__(self, initial_state: 'State', heuristic_function, **kwargs):
         super().__init__(initial_state, heuristic_function, **kwargs)
+    #TODO: fix this A-star shit
 
     def h(self, state: 'State') -> 'int':
         return self.heuristic_function(self, state, self.dist_function)
 
     def f(self, state: 'State') -> 'int':
-        return state.g + self.h(state)
+        return self.h(state) + state.g
 
     def __repr__(self):
         return 'A* evaluation'

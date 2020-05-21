@@ -14,10 +14,10 @@ max_replanning_depth=5
 
 max_replanning_steps=max_replanning_depth*2
 
-while_counter = 40
+while_counter = 200
 
 #Random agents variables
-initiate_random_agents = True
+initiate_random_agents = False
 agent_max_stall = 5
 
 #FOR OUR OWN LEVEL, seed = 88

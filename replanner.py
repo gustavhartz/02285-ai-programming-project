@@ -32,7 +32,6 @@ class Replanner(metaclass=ABCMeta):
         :return:
         '''
 
-        print(f'&&&&& inputs: agent: {agent.agent_char}, assigned box {assigned_box}, blocked locations {blocked_location}',file=sys.stderr,flush=True)
         self.world_state = State(world_state)
         assigned_box = agent.current_box_id
 
@@ -60,8 +59,6 @@ class Replanner(metaclass=ABCMeta):
             else:
                 temp_state.boxes.pop(element)
 
-        print(f'Temp state boxes {temp_state.boxes}',file=sys.stderr,flush=True)
-
         # Remove other agents and let collision avoidance responsibility be at conflictmanager level.
         __to_be_removed = []
         for _k, _v in temp_state.agents.items():
@@ -74,8 +71,6 @@ class Replanner(metaclass=ABCMeta):
         while len(__to_be_removed) > 0:
             temp_state.agents.pop(__to_be_removed.pop())
 
-        print(f'Temp state agents {temp_state.agents}',file=sys.stderr,flush=True)
-
         location = [int(x) for x in agent_dict[agent.agent_char][1].split(",")]
         agent_row = location[0]
         agent_col = location[1]
@@ -83,8 +78,6 @@ class Replanner(metaclass=ABCMeta):
         action_counter = 0
         _replanned = False
 
-
-        print(f'agent location {location}, agent_row {agent_row}, agent_col {agent_col}',file=sys.stderr,flush=True)
 
         # Update world state for agent - check if it can be removed
         temp_state.redirecter_search=True
@@ -105,14 +98,11 @@ class Replanner(metaclass=ABCMeta):
                     if temp_state.is_free(f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}'):
 
                         
-                        
-                        print(f'OOOO actioncounter {action_counter}, move {action.agent_dir} temp_state is free',file=sys.stderr,flush=True)
 
                         temp_replan = agent.search_replanner_heuristic(temp_state,
                                         blocked_locations=blocked_location, 
                                         agent_to = f'{agent_row+action.agent_dir.d_row},{agent_col+action.agent_dir.d_col}')
-                        
-                        print(f'temp replan {temp_replan}',file=sys.stderr,flush=True)
+
                         # remove old plan
                         if temp_replan is None:
                             return False
@@ -121,7 +111,6 @@ class Replanner(metaclass=ABCMeta):
                             _replanned = True
                             return True
                     else:
-                        print(f'actioncounter {action_counter}, move temp_state not free',file=sys.stderr,flush=True)
                         agent_row = agent_row + action.agent_dir.d_row
                         agent_col = agent_col + action.agent_dir.d_col
                 else:
@@ -237,7 +226,6 @@ class Replanner(metaclass=ABCMeta):
                     box_col = agent_col + action.box_dir.d_col + action.box_dir.d_col
 
         if not _replanned:
-            print(temp_state, file=sys.stderr, flush=True)
             #raise Exception('Goal location blocked or unreachable')
             return False
         # print(agent.plan, file=sys.stderr, flush=True)

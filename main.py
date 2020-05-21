@@ -94,9 +94,6 @@ def main():
     goal_assigner = GoalAssigner(current_state, goal_dependencies=client.goal_dependencies, list_of_agents=list_agents)
     goal_assigner.reassign_tasks()
 
-    for agt in list_agents:
-        print(f'agt_char = {agt.agent_char}, inter_id= {agt.agent_internal_id}, box_assign = {agt.current_box_id}',file=sys.stderr,flush=True)
-
     conflict_manager = ConflictManager(list_agents)
     
     #Fixing conflict in initial plans
@@ -107,7 +104,7 @@ def main():
     #Agent randomness execution variables
     agent_prev_category = [-1]*len(list_agents_full)
     agent_noop_counter = [0]*len(list_agents_full)
-    include_categories = [config.goal_assigner_box,config.goal_assigner_location,config.self_helping]
+    include_categories = [config.goal_assigner_box, config.goal_assigner_location, config.self_helping, config.solving_help_task]
     
 
     # Whileloop
@@ -128,13 +125,6 @@ def main():
         '''
         print(f'-----------------------{counter}-----------------------',file=sys.stderr,flush=True)
 
-
-
-        # print(f"WHILE ENTER {counter}\n", file=sys.stderr, flush=True)
-        # print(f"{current_state.boxes} boxes", file=sys.stderr, flush=True)
-        # print(f"{current_state.agents} agents", file=sys.stderr, flush=True)
-
-        
         # TODO: Check subgoal for agents - does it need to be updated
 
         # Keeps it from getting out of hand while testing
@@ -170,9 +160,9 @@ def main():
         for e in list_agents:
             if len(e.plan) > 0:
                 # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-                print(f'{e.plan[0]} {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+                print(f'{e.plan[0]} {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
             else:
-                print(f'NoPlan for {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+                print(f'NoPlan for {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
 
         # Give task to unassigned agents
         goal_assigner.reassign_tasks()
@@ -180,18 +170,26 @@ def main():
         for e in list_agents:
             if len(e.plan) > 0:
                 # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-                print(f'>>{e.plan[0]} {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+                print(f'>>{e.plan[0]} {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
             else:
-                print(f'>>NoPlan for {e.agent_char} before conflict length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+                print(f'>>NoPlan for {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
        
 
 
-        print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
+        # print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
 
         conflict_manager.blackboard_conflictSolver(list_agents)
-        print(f'############## post BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
 
-        print(f'!-!-!-! {[(x.agent_char,x.helper_agt_requester_id, x.helper_id) for x in list_agents]}',file=sys.stderr,flush=True)
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'>>{e.plan[0]} {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category} helping:{e.helper_agt_requester_id}', file=sys.stderr, flush=True)
+            else:
+                print(f'>>NoPlan for {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category}, helping:{e.helper_agt_requester_id}', file=sys.stderr, flush=True)
+
+        # print(f'############## post BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
+        #
+        # print(f'!-!-!-! {[(x.agent_char,x.helper_agt_requester_id, x.helper_id) for x in list_agents]}',file=sys.stderr,flush=True)
 
 
         # Improve speed - find the agetns that are currently executing help tasks
@@ -209,14 +207,14 @@ def main():
                 if _awaiting_done:
                     x.nested_help=False
 
-        for e in list_agents:
-            if len(e.plan) > 0:
-                print(f'{e.plan[0]} {e.agent_char} after conflict ', file=sys.stderr, flush=True)
-            else:
-                print(f'NoPlan for {e.agent_char} after conflict', file=sys.stderr, flush=True)
+        # for e in list_agents:
+        #     if len(e.plan) > 0:
+        #         print(f'{e.plan[0]} {e.agent_char} after conflict ', file=sys.stderr, flush=True)
+        #     else:
+        #         print(f'NoPlan for {e.agent_char} after conflict', file=sys.stderr, flush=True)
 
-        print(f'- world_state agents before actions:  {current_state.agents}',file=sys.stderr,flush=True)
-        print(f'- world_state boxes before actions:  {current_state.boxes}',file=sys.stderr,flush=True)
+        # print(f'- world_state agents before actions:  {current_state.agents}',file=sys.stderr,flush=True)
+        # print(f'- world_state boxes before actions:  {current_state.boxes}',file=sys.stderr,flush=True)
     
 
         #TODO: Sync here with deleted agents and get their latest actions
@@ -225,7 +223,12 @@ def main():
         # This functions gives a noop if it does not have a plan
         list_of_actions = [x.get_next_action() for x in list_agents_full]
 
-        
+        print("before random", file=sys.stderr, flush=True)
+        print(agent_noop_counter, file=sys.stderr, flush=True)
+        print("\n", file=sys.stderr, flush=True)
+        print(agent_prev_category, file=sys.stderr, flush=True)
+
+
         if config.initiate_random_agents:
             #Increase counters if agent have been stalling  
             for idx, act in enumerate(list_of_actions):
@@ -239,7 +242,7 @@ def main():
             if max(agent_noop_counter)>config.agent_max_stall:
                 #Create possible future state only if any value is actually above threshold
                 temp_state = State(current_state)
-                temp_state.world_state_update(list_of_actions,client.del_agents_ids)
+                temp_state.world_state_update(list_of_actions, client.del_agents_ids)
                 agentDict = current_state.reverse_agent_dict()
                 
                 #list of temp coordinates that are blocked along the way 
@@ -271,7 +274,7 @@ def main():
                                 found_action = True
                                 
                                 break
-                        if found_action:
+                        if found_action and list_agents_full[idx].plan_category!=config.solving_help_task:
                             #Ask agent to forget everything, but and then push the applicable action
                             agent_noop_counter[idx] = 0
                             list_agents_full[idx].agent_amnesia()
@@ -280,12 +283,27 @@ def main():
 
                             #"Apply" action
                             temp_blocked.append(loc_string)
+                        elif found_action and list_agents_full[idx].plan_category == config.solving_help_task:
+                            agent_noop_counter[idx] = 0
+                            if list_agents_full[idx].helper_agt_requester_id is not None:
+                                list_agents_full[list_agents_full[idx].helper_agt_requester_id].agent_amnesia()
+                                agent_noop_counter[list_agents_full[idx].helper_agt_requester_id] = 0
+                                list_agents_full[idx].agent_amnesia()
+
+                            list_of_actions[idx] = applicable_action
+
+                            # "Apply" action
+                            temp_blocked.append(loc_string)
+
+        print("After random", file=sys.stderr, flush=True)
+        print(agent_noop_counter, file=sys.stderr, flush=True)
+        print("\n", file=sys.stderr, flush=True)
+        print(agent_prev_category, file=sys.stderr, flush=True)
 
 
         # push to server -> list of actions
         my_string = ';'.join(list(str(x) for x in list_of_actions))
         print(my_string, flush=True)
-
         # getting the data from the client to asses validity of actions
         response = server_messages.readline().rstrip()
         print(response, file=sys.stderr, flush=True)
@@ -293,10 +311,10 @@ def main():
             if resp == 'false':
                 raise Exception("[FATAL ERROR] received false response from server")
 
-        current_state.world_state_update(list_of_actions,client.del_agents_ids)
+        current_state.world_state_update(list_of_actions, client.del_agents_ids)
 
-        print(f'- World_satate after actions: {current_state.agents}',file=sys.stderr,flush=True)
-        print(f'- world_state boxes after actions:  {current_state.boxes}',file=sys.stderr,flush=True)
+        # print(f'- World_satate after actions: {current_state.agents}',file=sys.stderr,flush=True)
+        # print(f'- world_state boxes after actions:  {current_state.boxes}',file=sys.stderr,flush=True)
 
 
         if current_state.world_is_goal_state():
@@ -311,9 +329,6 @@ def main():
         #Randomizer updating - keeping track in next iteration of the type of category 
         for ct, agt in enumerate(list_agents_full):
             agent_prev_category[ct] = agt.plan_category
-
-
-
 
         print("\n", file=sys.stderr, flush=True)
         counter += 1

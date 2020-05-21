@@ -95,6 +95,8 @@ class search_agent(Agent):
 
         iterations = 0
         while True:
+            if self.agent_char==1 and self.current_box_id==3:
+                print(strategy.frontier, file=sys.stderr,flush=True)
             if iterations == 1000:
                 print(strategy.search_status(), file=sys.stderr, flush=True)
                 iterations = 0
@@ -104,7 +106,8 @@ class search_agent(Agent):
                 return None
 
             if strategy.frontier_empty():
-                print('Empty frontier', file=sys.stderr, flush=True)
+                print(f'{self.agent_char}', file=sys.stderr, flush=True)
+                print('Empty frontier SearchToBox', file=sys.stderr, flush=True)
                 return None
 
             leaf = strategy.get_and_remove_leaf()
@@ -169,6 +172,8 @@ class search_agent(Agent):
                 return None
 
             if strategy.frontier_empty():
+                print(f'{self.agent_char}', file=sys.stderr, flush=True)
+                print(f'empty frontier search with box', file=sys.stderr, flush=True)
                 return None
 
             leaf = strategy.get_and_remove_leaf()
@@ -230,7 +235,9 @@ class search_agent(Agent):
                 return None
 
             if strategy.frontier_empty():
-                print('Empty frontier', file=sys.stderr, flush=True)
+                print(f'{self.agent_char}', file=sys.stderr, flush=True)
+                print('Empty frontier search pos', file=sys.stderr, flush=True)
+
                 return None
 
             leaf = strategy.get_and_remove_leaf()
@@ -250,8 +257,6 @@ class search_agent(Agent):
     def search_replanner_heuristic(self, world_state: 'State',blocked_locations: list, agent_to, box_from=None, box_to=None):
         self.world_state = State(world_state)
 
-        print(f'agent_to {agent_to}',file=sys.stderr,flush=True)
-
         #Add blocked locations as walls, so the search does not include locations
         for loc in blocked_locations: 
             row,col = loc.split(",")
@@ -270,7 +275,6 @@ class search_agent(Agent):
         self.world_state.agents = defaultdict(list, removed_dict)
 
         if box_from is None:
-            print(f'Enter box_from is none, agent_to {agent_to}',file=sys.stderr,flush=False)
             strategy = StrategyBestFirst(heuristic.AStar(self.world_state, heuristic_func.h_replanner_pos,
                                                          agent_to=agent_to,
                                                          agent_char=self.agent_char))
@@ -284,8 +288,6 @@ class search_agent(Agent):
         strategy.reset_strategy()
 
         strategy.add_to_frontier(state=self.world_state)
-
-        print(f'AAAAgent init wordstate: {self.world_state}',file=sys.stderr,flush=False)
 
         iterations = 0
         while True:
@@ -303,6 +305,7 @@ class search_agent(Agent):
                 return None
 
             if strategy.frontier_empty():
+                print('Empty frontier search heuristic', file=sys.stderr, flush=True)
                 # finished searchspace without sol
                 for loc in blocked_locations: 
                     row,col = loc.split(",")
@@ -350,14 +353,11 @@ class search_agent(Agent):
                                                                             'coordinates': coordinates,
                                                                             'move_action_allowed': move_action_allowed
                                                                             }
-
-        print(f'>>> agent char : {self.agent_char},  {d}',file=sys.stderr,flush=True)
         #
 
         self.world_state = State(world_state)
         if box_id is None:
             move_action_allowed = True
-            print(f'>>>>Move=True, box_id=None', file=sys.stderr,flush=True)
         else:
             # fix for missing boxes in search
             self.current_box_id = box_id
@@ -376,15 +376,8 @@ class search_agent(Agent):
             locc_agt = utils._get_agt_loc(self.world_state,self.agent_char)
             locc_box = utils._get_box_loc(self.world_state, box_id)
 
-            print(f'locc_agt = {locc_agt}',file=sys.stderr,flush=True)
-            print(f'locc_box = {locc_box}',file=sys.stderr,flush=True)
-
-            print(f'?????????????? city b dist {utils.cityblock_distance(utils._get_agt_loc(self.world_state,self.agent_char),utils._get_box_loc(self.world_state, box_id))}',file=sys.stderr,flush=True)
             box_id=None
             move_action_allowed = True
-
-            print(f'>>>>Move=True, 332', file=sys.stderr,flush=True)
-
         
 
         #If agt is asked to move out of someones plan, then include this someone in the planinng
@@ -424,6 +417,10 @@ class search_agent(Agent):
                 return None
 
             if strategy.frontier_empty():
+                print('Empty frontier BFS NOT IN LIST', file=sys.stderr, flush=True)
+                print(f'{self.agent_char}', file=sys.stderr, flush=True)
+
+
                 ''' 
                 # TODO: Could not find a location where agent is not "in the way" - return something that triggers
                 the other collision object to move out of the way
@@ -514,7 +511,7 @@ class search_agent(Agent):
     def agent_amnesia(self):
         
         self._reset_from_help()
-        self._reset_plan()
+        self.plan.clear()
         self.goal_job_id = None
 
 

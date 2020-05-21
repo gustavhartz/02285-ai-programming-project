@@ -28,7 +28,7 @@ def create_dijkstras_map(state_: State):
                 raise Exception('Maximum mem used')
 
             if strategy.frontier_empty():
-                print('Done with dijkstras', file=sys.stderr, flush=True)
+                # print('Done with dijkstras', file=sys.stderr, flush=True)
                 break
 
             leaf = strategy.get_and_remove_leaf()
