@@ -320,7 +320,7 @@ class search_agent(Agent):
         while True:
 
             if _counter == _cfg.max_search_depth:
-                return False
+                return None
 
             if iterations == 1000:
                 print(f"replanner H{strategy.search_status()}", file=sys.stderr, flush=True)

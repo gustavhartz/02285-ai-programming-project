@@ -166,7 +166,7 @@ class Replanner(metaclass=ABCMeta):
                                                                 agent_to=f'{agent_row + action.agent_dir.d_row},{agent_col + action.agent_dir.d_col}',
                                                                 box_from=k_temp,
                                                                 box_to=f'{agent_row},{agent_col}')
-                    if temp_replan is None:
+                    if (temp_replan is None) or (temp_replan is False):
                         return False
                     else:
                         merge_agent_plans(agent, temp_replan, action_counter)

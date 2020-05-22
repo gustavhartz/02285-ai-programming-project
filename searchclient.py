@@ -364,8 +364,6 @@ class SearchClient:
  
         return explored
 
-    
-
     def makeWell(self, graph,coordinate,cost,goal_priority_list,well_id):
             
             if coordinate in self.initial_state.goal_positions:
@@ -387,9 +385,6 @@ class SearchClient:
 
                     if con in self.initial_state.goal_positions:
                         goal_priority_list.append(con)
-
-                    
-            
 
     def bfs_tunnels(self,graph,start,tunnel_id):
         # keep track of all visited nodes

@@ -55,9 +55,9 @@ class ConflictManager:
         for loc,box in self.world_state.boxes.items():
             row,col = loc.split(',')
 
-            # print(box[0][2], file=sys.stderr, flush=True)
-            # print(box, file=sys.stderr, flush=True)
-            # print(len(blackboard[0]), file=sys.stderr, flush=True)
+            print(box[0][2], file=sys.stderr, flush=True)
+            print(box, file=sys.stderr, flush=True)
+            print(len(blackboard[0]), file=sys.stderr, flush=True)
 
             blackboard[0][box[0][2]+len_agents] = f'{row},{col}'
 
