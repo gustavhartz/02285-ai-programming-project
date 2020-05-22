@@ -579,8 +579,6 @@ class ConflictManager:
 
                                                 agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                                 agents[v_id].plan.appendleft(Action(ActionType.NoOp, None, None))
-                                                # print(f"idx:{idx}, vid:{v_id} , {self._calculate_plan_coords(agt,blackboard[0][agt.agent_internal_id])}")
-                                                # raise NotImplementedError(f'Deadlock between agents, idx: {idx} and v_id: {v_id}')
                                                 # Agent cannot move out of plan
                                             else:
                                                 #If agents was able to move our of idx's plan, give 1 NoOp so we dont collide 

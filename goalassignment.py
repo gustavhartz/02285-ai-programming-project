@@ -197,7 +197,6 @@ class GoalAssigner(Assigner):
                     if (self.world_state.colors[v[0]] == element.agent_color) \
                             and (k not in used_ids)\
                             and (element.connected_component_id == box_reversed[v[1]][1]):
-                        # TODO: Print
                         # Gives current distance from agent to box
                         temp_dist = cityblock_distance(self.world_state.reverse_boxes_dict()[v[1]][0],
                                                        self.world_state.reverse_agent_dict()[element.agent_char][1])

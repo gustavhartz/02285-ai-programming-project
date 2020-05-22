@@ -14,6 +14,7 @@ from preprocessing import create_dijkstras_map
 from action import MOVE_ACTIONS
 from random import shuffle
 from config import testing
+from datetime import datetime
 
 
 def main():
@@ -23,7 +24,7 @@ def main():
     server_messages = sys.stdin
 
     # Use stderr to print to console through server.
-    print('SearchClient initializing. I am sending this using the error output stream.', file=sys.stderr, flush=True)
+    print(f'SearchClient initializing. I am sending this using the error output stream. {datetime.now()}', file=sys.stderr, flush=True)
 
     # Initialize level by sending client name
     ClientName= f"{config.client_name}\r".encode("ascii")
@@ -59,7 +60,6 @@ def main():
     list_agents = []
     del_agents = []
     for k, v in current_state.reverse_agent_dict().items():
-        print(f'{k},{v}',file=sys.stderr, flush=True)
         if k not in client.del_agents_ids:
             # Char int, color, connectedcomp, strategy
             list_agents.append(search_agent(k, v[0], v[3], v[2], StrategyBestFirst))
@@ -113,7 +113,7 @@ def main():
     agent_noop_counter = [0]*len(list_agents_full)
     include_categories = [config.goal_assigner_box, config.goal_assigner_location, config.self_helping, config.solving_help_task]
     
-
+    print(f"Data loaded - While enter - time: {datetime.now()}", file=sys.stderr, flush=True)
     # Whileloop
     counter = 0
     while True:
