@@ -285,6 +285,7 @@ class ConflictManager:
 
                                                     # TODO: Might have unforseen consequences
                                                     helper_agt.helper_agt_requester_id = agt.agent_char
+                                                    helper_agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                                 else:
                                                     self.agent_amnesia(agt)
                                             else:
@@ -463,6 +464,7 @@ class ConflictManager:
 
                                                     # TODO: Might have unforseen consequences
                                                     helper_agt.helper_agt_requester_id = agt.agent_char
+                                                    helper_agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                                 else:
                                                     self.agent_amnesia(agt)
                                             else:
@@ -637,6 +639,7 @@ class ConflictManager:
 
                                                         # TODO: Might have unforseen consequences
                                                         helper_agt.helper_agt_requester_id = agt.agent_char
+                                                        helper_agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                                     else:
                                                         self.agent_amnesia(agt)
                                                 else:
