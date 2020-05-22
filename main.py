@@ -136,37 +136,36 @@ def main():
         if counter == config.while_counter:
             break
 
-        # for e in list_agents:
-        #     if len(e.plan) > 0:
-        #         # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-        #         print(f'{e.plan[0]} {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
-        #     else:
-        #         print(f'NoPlan for {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
-        # print(f'\n',file=sys.stderr, flush=True)
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'{e.plan[0]} {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id} int well {e.in_well_await}', file=sys.stderr, flush=True)
+            else:
+                print(f'NoPlan for {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id} int well {e.in_well_await}', file=sys.stderr, flush=True)
+        print(f'\n',file=sys.stderr, flush=True)
 
         # Give task to unassigned agents
         goal_assigner.reassign_tasks()
         
-        # for e in list_agents:
-        #     if len(e.plan) > 0:
-        #         # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-        #         print(f'>>{e.plan[0]} {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
-        #     else:
-        #         print(f'>>NoPlan for {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
-        # print(f'\n',file=sys.stderr, flush=True)
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'>>{e.plan[0]} {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id} int well {e.in_well_await}', file=sys.stderr, flush=True)
+            else:
+                print(f'>>NoPlan for {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id} int well {e.in_well_await}', file=sys.stderr, flush=True)
+        print(f'\n',file=sys.stderr, flush=True)
 
-        # print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
 
         conflict_manager.blackboard_conflictSolver(list_agents)
 
 
 
-        # for e in list_agents:
-        #     if len(e.plan) > 0:
-        #         # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-        #         print(f'>>{e.plan[0]} {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category} helping:{e.helper_agt_requester_id}, help from: {e.helper_id}', file=sys.stderr, flush=True)
-        #     else:
-        #         print(f'>>NoPlan for {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category}, helping:{e.helper_agt_requester_id}, help from: {e.helper_id}', file=sys.stderr, flush=True)
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'>>{e.plan[0]} {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category} helping:{e.helper_agt_requester_id}, help from: {e.helper_id} int well {e.in_well_await}', file=sys.stderr, flush=True)
+            else:
+                print(f'>>NoPlan for {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category}, helping:{e.helper_agt_requester_id}, help from: {e.helper_id} int well {e.in_well_await}', file=sys.stderr, flush=True)
 
 
 

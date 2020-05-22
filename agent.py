@@ -48,6 +48,8 @@ class search_agent(Agent):
         self.helper_id = None
         self.pending_help_pending_plan = None
 
+        # well await
+        self.in_well_await = False
 
         #Self-help pipeline
         self.self_pending_task_funcs = []

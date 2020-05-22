@@ -15,7 +15,7 @@ max_replanning_depth=5
 
 max_replanning_steps=max_replanning_depth*2
 
-while_counter = 25
+while_counter = 100
 
 # This is the maximum amount of nodes allowed to explored
 max_search_depth = 2000

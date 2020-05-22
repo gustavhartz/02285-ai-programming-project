@@ -204,7 +204,20 @@ class GoalAssigner(Assigner):
                     # no assignment for this agent
                     continue
                 assignments[best_element] = element
-        
+            else:
+                '''
+                Karen well fix - CURRENTLY NOT SUPPORTED
+                '''
+                if element.in_well_await:
+                    for _agt_ in self.agents:
+                        if _agt_.agent_char == element.helper_id[0]:
+                            if (_agt_.helper_agt_requester_id is None) or (len(_agt_.plan) < 1) or (_agt_.helper_agt_requester_id!= element.agent_char):
+                                element.in_well_await = False
+                            else:
+                                element.plan.appendleft(Action(ActionType.NoOp, None, None))
+                            break
+
+
         # If new box tasks found for agent - create format for delegate and assign
         if len(assignments_with_box)>0:
             #assignment_with_box {'11,4': search agent}

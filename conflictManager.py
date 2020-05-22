@@ -55,10 +55,6 @@ class ConflictManager:
         for loc,box in self.world_state.boxes.items():
             row,col = loc.split(',')
 
-            print(box[0][2], file=sys.stderr, flush=True)
-            print(box, file=sys.stderr, flush=True)
-            print(len(blackboard[0]), file=sys.stderr, flush=True)
-
             blackboard[0][box[0][2]+len_agents] = f'{row},{col}'
 
         #Set coordinates after 1 action
@@ -246,9 +242,54 @@ class ConflictManager:
                                         
                                         #If no agent was found, just wait until someone becomes available
                                         if helper_agt is None:
-                                            self.agent_amnesia(agt)
-                                            #TODO: not final solution
-                                            #agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+                                            # Helper helping itself
+                                            if v_id > len_agents:
+                                                '''
+                                                If agent color an col box is the same and the box is not assigned - then we can help ourselves
+                                                Save old plan
+                                                reset old help requester
+                                                convert ourselves to helper
+                                                Move out of saved plan
+                                                '''
+                                                _unav_boxes = set(x.current_box_id for x in agents)
+                                                if agt.agent_color == self.world_state.boxes[blackboard[0][v_id]][0][
+                                                    0] and v_id not in _unav_boxes:
+                                                    helper_agt = agt
+                                                    plan_coords = self._calculate_plan_coords(agt, blackboard[0][
+                                                        agt.agent_internal_id])
+
+                                                    # find old helper
+                                                    _found = False
+                                                    for _agt_ in agents:
+                                                        if _agt_.agent_char == agt.helper_agt_requester_id:
+                                                            _found = True
+                                                            break
+                                                    if _found:
+                                                        _agt_.agent_amnesia()
+
+                                                    helper_agt.plan_category = _cfg.solving_help_task
+                                                    helper_agt._reset_plan()
+                                                    search_values = {'world_state': self.world_state,
+                                                                     'agent_collision_internal_id': None,
+                                                                     'agent_collision_box': None,
+                                                                     'box_id': self.world_state.boxes[
+                                                                         blackboard[0][v_id]][0][2],
+                                                                     'coordinates': plan_coords,
+                                                                     'move_action_allowed': False
+                                                                     }
+
+                                                    helper_agt.search_conflict_bfs_not_in_list(**search_values)
+                                                    # ***
+                                                    # Push next job to agent: Search out of well with the box
+                                                    helper_agt.goal_job_id = None
+
+                                                    # TODO: Might have unforseen consequences
+                                                    helper_agt.helper_agt_requester_id = agt.agent_char
+                                                else:
+                                                    self.agent_amnesia(agt)
+                                            else:
+                                                print(f'getting amnesai {agt.agent_char}', file=sys.stderr)
+                                                self.agent_amnesia(agt)
                                         else:
                                             #One agent has bee found as helper.
                                             
@@ -285,9 +326,21 @@ class ConflictManager:
                                                     agt.plan_category = _cfg.awaiting_help
                                                     #TODO: inkluder pending_help i if eller ikke?
                                                     agt.pending_help = True
-        
-                                                
-                                                
+
+                                                # # TODO: fucks with deepplan level
+                                                '''
+                                                Karen well fix - NOT WORKING PROPPERLY
+                                                '''
+                                                # if (blackboard[0][idx] in self.world_state.wells) and (blackboard[0][v_id] in self.world_state.wells):
+                                                #     if (self.world_state.wells[blackboard[0][idx]][1] < self.world_state.wells[blackboard[0][v_id]][1]) and (not (agt.helper_id[0] == agt.agent_char)):
+                                                #         #colision location
+                                                #         _col_loc = blackboard[0][v_id]
+                                                #         if _col_loc in self.world_state.boxes:
+                                                #             if self.world_state.boxes[_col_loc][0][0] == agt.agent_color:
+                                                #                 pass
+                                                #             else:
+                                                #                 agt.in_well_await = True
+
                                                 if box_id is not None:
                                                     agt.search_conflict_bfs_not_in_list(world_state = self.world_state, \
                                                             agent_collision_internal_id = None, \
@@ -366,10 +419,54 @@ class ConflictManager:
 
                                         #If no agent was found, just wait until someone becomes available
                                         if helper_agt is None:
-                                            self.agent_amnesia(agt)
+                                            # Helper helping itself
+                                            if v_id > len_agents:
+                                                '''
+                                                If agent color an col box is the same and the box is not assigned - then we can help ourselves
+                                                Save old plan
+                                                reset old help requester
+                                                convert ourselves to helper
+                                                Move out of saved plan
+                                                '''
+                                                _unav_boxes = set(x.current_box_id for x in agents)
+                                                if agt.agent_color == self.world_state.boxes[blackboard[0][v_id]][0][
+                                                    0] and v_id not in _unav_boxes:
+                                                    helper_agt = agt
+                                                    plan_coords = self._calculate_plan_coords(agt, blackboard[0][
+                                                        agt.agent_internal_id])
 
-                                            #TODO: not final
-                                            #agt.plan.appendleft(Action(ActionType.NoOp, None, None))
+                                                    # find old helper
+                                                    _found = False
+                                                    for _agt_ in agents:
+                                                        if _agt_.agent_char == agt.helper_agt_requester_id:
+                                                            _found = True
+                                                            break
+                                                    if _found:
+                                                        _agt_.agent_amnesia()
+
+                                                    helper_agt.plan_category = _cfg.solving_help_task
+                                                    helper_agt._reset_plan()
+                                                    search_values = {'world_state': self.world_state,
+                                                                     'agent_collision_internal_id': None,
+                                                                     'agent_collision_box': None,
+                                                                     'box_id': self.world_state.boxes[
+                                                                         blackboard[0][v_id]][0][2],
+                                                                     'coordinates': plan_coords,
+                                                                     'move_action_allowed': False
+                                                                     }
+
+                                                    helper_agt.search_conflict_bfs_not_in_list(**search_values)
+                                                    # ***
+                                                    # Push next job to agent: Search out of well with the box
+                                                    helper_agt.goal_job_id = None
+
+                                                    # TODO: Might have unforseen consequences
+                                                    helper_agt.helper_agt_requester_id = agt.agent_char
+                                                else:
+                                                    self.agent_amnesia(agt)
+                                            else:
+                                                print(f'getting amnesai {agt.agent_char}', file=sys.stderr)
+                                                self.agent_amnesia(agt)
                                         else:
                                             #One agent has been found as helper.
 
@@ -439,7 +536,6 @@ class ConflictManager:
                                             else:
                                                 helper_agt.pending_task_dict['coordinates'] = _coords_plan_of_requester
 
-
                                 #If in open space
                                 else:
                                     #Try to move around. If no plan around object was found in X steps, we ask for the object to be moved.
@@ -460,10 +556,8 @@ class ConflictManager:
                                             blocked = [blackboard[0][v_id]]
 
 
-
                                     able_to_move = self.replanner.replan_v1(self.world_state,agt ,box_id, blocked)
-                                    
-                                    
+
                                     # TODO: Change states and categories to the appropiate values
                                     if not able_to_move:
                                         if v_id < len_agents:
@@ -492,20 +586,61 @@ class ConflictManager:
                                                 agt.plan.appendleft(Action(ActionType.NoOp, None, None))
                                                 agents[v_id].plan.appendleft(Action(ActionType.NoOp, None, None))
 
-                                                 
-
                                         else:
                                             # Ask to have box removed from idx's plan if not assigned
                                             #idx hits a box, ask for help to move this box:
                                             
                                             helper_agt = self._determine_helper_agent(blackboard[0][v_id],blackboard,agents)
+                                            print(f'getting amnesai {helper_agt}', file=sys.stderr)
 
-                                            
-                                            
                                             #If no agent was found, just wait until someone becomes available
                                             if helper_agt is None:
-                                                self.agent_amnesia(agt)
-                                                
+                                                # Helper helping itself
+                                                if v_id > len_agents:
+                                                    '''
+                                                    If agent color an col box is the same and the box is not assigned - then we can help ourselves
+                                                    Save old plan
+                                                    reset old help requester
+                                                    convert ourselves to helper
+                                                    Move out of saved plan
+                                                    '''
+                                                    _unav_boxes = set(x.current_box_id for x in agents)
+                                                    if agt.agent_color == self.world_state.boxes[blackboard[0][v_id]][0][0] and v_id not in _unav_boxes:
+                                                        helper_agt = agt
+                                                        plan_coords = self._calculate_plan_coords(agt, blackboard[0][agt.agent_internal_id])
+
+                                                        # find old helper
+                                                        _found = False
+                                                        for _agt_ in agents:
+                                                            if _agt_.agent_char == agt.helper_agt_requester_id:
+                                                                _found = True
+                                                                break
+                                                        if _found:
+                                                            _agt_.agent_amnesia()
+
+                                                        helper_agt.plan_category = _cfg.solving_help_task
+                                                        helper_agt._reset_plan()
+                                                        search_values = {'world_state': self.world_state,
+                                                                         'agent_collision_internal_id': None,
+                                                                         'agent_collision_box': None,
+                                                                         'box_id': self.world_state.boxes[
+                                                                             blackboard[0][v_id]][0][2],
+                                                                         'coordinates': plan_coords,
+                                                                         'move_action_allowed': False
+                                                                         }
+
+                                                        helper_agt.search_conflict_bfs_not_in_list(**search_values)
+                                                        # ***
+                                                        # Push next job to agent: Search out of well with the box
+                                                        helper_agt.goal_job_id = None
+
+                                                        # TODO: Might have unforseen consequences
+                                                        helper_agt.helper_agt_requester_id = agt.agent_char
+                                                    else:
+                                                        self.agent_amnesia(agt)
+                                                else:
+                                                    print(f'getting amnesai {agt.agent_char}', file=sys.stderr)
+                                                    self.agent_amnesia(agt)
 
                                                 #TODO: not final
                                                 #agt.plan.appendleft(Action(ActionType.NoOp, None, None))
