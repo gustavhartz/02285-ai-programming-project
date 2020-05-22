@@ -114,9 +114,13 @@ def main():
     include_categories = [config.goal_assigner_box, config.goal_assigner_location, config.self_helping, config.solving_help_task]
     
     print(f"Data loaded - While enter - time: {datetime.now()}", file=sys.stderr, flush=True)
+
+
     # Whileloop
     counter = 0
     while True:
+        print(f"{counter} \n {len(current_state.walls)} \n\n", file=sys.stderr, flush=True)
+
         '''
         Process of control loop
 

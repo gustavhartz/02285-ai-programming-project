@@ -13,7 +13,6 @@ from action import Action, ActionType, Dir
 
 
 
-
 # Super class that all agent classes inharit functions form
 class Agent(metaclass=ABCMeta):
     None
@@ -329,6 +328,9 @@ class search_agent(Agent):
         while True:
 
             if _counter == _cfg.max_search_depth:
+                for loc in blocked_locations:
+                    row,col = loc.split(",")
+                    self.world_state.walls.pop(f'{row},{col}')
                 return None
 
             if iterations == 1000:
