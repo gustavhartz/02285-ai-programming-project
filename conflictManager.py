@@ -55,9 +55,9 @@ class ConflictManager:
         for loc,box in self.world_state.boxes.items():
             row,col = loc.split(',')
 
-            print(box[0][2], file=sys.stderr, flush=True)
-            print(box, file=sys.stderr, flush=True)
-            print(len(blackboard[0]), file=sys.stderr, flush=True)
+            # print(box[0][2], file=sys.stderr, flush=True)
+            # print(box, file=sys.stderr, flush=True)
+            # print(len(blackboard[0]), file=sys.stderr, flush=True)
 
             blackboard[0][box[0][2]+len_agents] = f'{row},{col}'
 
@@ -385,9 +385,6 @@ class ConflictManager:
                                             helper_agt._reset_plan()
                                             #Search to location where our current agent/box is located
                                             helper_agt.search_to_box(self.world_state, blackboard[0][v_id],v_id-len_agents)
-                                            if agt.agent_char==1:
-                                                print(f"ENTER: {agt.agent_char}",file=sys.stderr,flush=True)
-                                                print(f"plan: {_coords_plan_of_requester}",file=sys.stderr,flush=True)
 
                                             #***
                                             helper_agt.plan.appendleft(Action(ActionType.NoOp, None, None))

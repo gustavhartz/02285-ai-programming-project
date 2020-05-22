@@ -89,7 +89,7 @@ def main():
                 current_state.agents[k][0][2] = agt.agent_internal_id
 
     
-    print(len(current_state.boxes),file=sys.stderr,flush=True)
+    # print(len(current_state.boxes),file=sys.stderr,flush=True)
     goal_assigner = GoalAssigner(current_state, goal_dependencies=client.goal_dependencies, list_of_agents=list_agents)
     goal_assigner.reassign_tasks()
 
@@ -159,36 +159,33 @@ def main():
         for e in list_agents:
             if len(e.plan) > 0:
                 # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-                print(f'{e.plan[0]} {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+                print(f'{e.plan[0]} {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
             else:
-                print(f'NoPlan for {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
+                print(f'NoPlan for {e.agent_char} before goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
+        print(f'\n',file=sys.stderr, flush=True)
 
         # Give task to unassigned agents
         goal_assigner.reassign_tasks()
         
-        # for e in list_agents:
-        #     if len(e.plan) > 0:
-        #         # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-        #         print(f'>>{e.plan[0]} {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
-        #     else:
-        #         print(f'>>NoPlan for {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category}', file=sys.stderr, flush=True)
-       
-
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'>>{e.plan[0]} {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
+            else:
+                print(f'>>NoPlan for {e.agent_char} after goal length: {len(e.plan)} category:{e.plan_category} help from: {e.helper_id}', file=sys.stderr, flush=True)
+        print(f'\n',file=sys.stderr, flush=True)
 
         # print(f'############## pre BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
 
         conflict_manager.blackboard_conflictSolver(list_agents)
 
-        # for e in list_agents:
-        #     if len(e.plan) > 0:
-        #         # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
-        #         print(f'>>{e.plan[0]} {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category} helping:{e.helper_agt_requester_id}', file=sys.stderr, flush=True)
-        #     else:
-        #         print(f'>>NoPlan for {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category}, helping:{e.helper_agt_requester_id}', file=sys.stderr, flush=True)
+        for e in list_agents:
+            if len(e.plan) > 0:
+                # print(f'{e.agent_char} plan:{e.plan}', flush=True, file=sys.stderr)
+                print(f'>>{e.plan[0]} {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category} helping:{e.helper_agt_requester_id}, help from: {e.helper_id}', file=sys.stderr, flush=True)
+            else:
+                print(f'>>NoPlan for {e.agent_char} after conflict length: {len(e.plan)} category:{e.plan_category}, helping:{e.helper_agt_requester_id}, help from: {e.helper_id}', file=sys.stderr, flush=True)
 
-        # print(f'############## post BOX_IDS {[(agt.agent_char,agt.current_box_id) for agt in list_agents]}',file=sys.stderr,flush=True)
-        #
-        # print(f'!-!-!-! {[(x.agent_char,x.helper_agt_requester_id, x.helper_id) for x in list_agents]}',file=sys.stderr,flush=True)
 
 
         # Improve speed - find the agetns that are currently executing help tasks
@@ -227,10 +224,6 @@ def main():
         # This functions gives a noop if it does not have a plan
         list_of_actions = [x.get_next_action() for x in list_agents_full]
 
-        # print("before random", file=sys.stderr, flush=True)
-        # print(agent_noop_counter, file=sys.stderr, flush=True)
-        # print("\n", file=sys.stderr, flush=True)
-        # print(agent_prev_category, file=sys.stderr, flush=True)
 
 
         if config.initiate_random_agents:
@@ -301,12 +294,6 @@ def main():
 
                             # "Apply" action
                             temp_blocked.append(loc_string)
-
-        # print("After random", file=sys.stderr, flush=True)
-        # print(agent_noop_counter, file=sys.stderr, flush=True)
-        # print("\n", file=sys.stderr, flush=True)
-        # print(agent_prev_category, file=sys.stderr, flush=True)
-
 
         # push to server -> list of actions
         my_string = ';'.join(list(str(x) for x in list_of_actions))
